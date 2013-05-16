@@ -2,17 +2,17 @@
     - License, v. 2.0. If a copy of the MPL was not distributed with this
     - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-ho-contracts.js
+rho-contracts.js
 ===============
 
-Racket-style Higher-Order Contracts in plain JavaScript
+Racket-style Higher-Order Contracts in Plain JavaScript
 
 
 ## Introduction
 
 *(scroll down to* Tutorial *to skip the intro)*
 
-`ho-contracts.js` is an implementation of Racket's higher-order contracts library in
+`rho-contracts.js` is an implementation of Racket's higher-order contracts library in
 JavaScript. It is an attempt to bring to JavaScript the reliability benefits we
 usually get from static types, namely:
 
@@ -35,15 +35,15 @@ notice. When I couldn't stand it anymore, I wrote this contract library.
 
 ### Run-time vs Compile-time
 
-`ho-contracts.js` is purely a run-time checker. It will never give a compile-time
-error; it will never refuse to run your code. `ho-contracts.js` is an assert library
+`rho-contracts.js` is purely a run-time checker. It will never give a compile-time
+error; it will never refuse to run your code. `rho-contracts.js` is an assert library
 where the assertions are written in a style similar to that of a static type
 system, and whose checking discipline is sufficiently strict to provide similar
 guarantees as a type system (though not the same.)
 
 ### Higher-order contracts
 
-`ho-contracts.js` is an *higher-order* contract library, as opposed to
+`rho-contracts.js` is an *higher-order* contract library, as opposed to
 run-of-the-mill assertion library, which means that it provides the ability to
 check assertions on functions received as an arguments, and on function returned from
 functions. When implementing `derive(fn, deltaX)`, it is trivial to add an assert
@@ -79,7 +79,7 @@ number.
 
 The `derive` function itself is created as an anonymous function using JavaScript's
 own `function` keyword. The newly created anonymous function is then immediately
-wrapped with a contract-checking shell, using `ho-contracts.js`' `.wrap()` method on
+wrapped with a contract-checking shell, using `rho-contracts.js`' `.wrap()` method on
 contracts. The result of `.wrap()` is a function that:
 
 1. checks that the given arguments passes their contracts (aka, that `fn` 
@@ -90,7 +90,7 @@ contracts. The result of `.wrap()` is a function that:
 4. passes the result through to the to the original caller.
 
 In addition, at the moment of the call to the original function (Step 2 above),
-`ho-contracts.js` will `.wrap()` the function passed-in for `fn`. This way `fn`
+`rho-contracts.js` will `.wrap()` the function passed-in for `fn`. This way `fn`
 itself will be protected by a contract shell during the entire duration of the
 execution of the body of `derive`, and all its invocations will be checked
 against the contract.
@@ -146,26 +146,26 @@ the implementation of `derive`. But that is incorrect. The error is not that
 broke its contract -- or more precisely, the module calling `derive` was
 contractually required to provide a function that would only return numbers when
 called, but it failed to abide to its responsibility. The error message should
-make it clear that the failure comes from `fn`, not from `derive`. `ho-contracts.js`'s
+make it clear that the failure comes from `fn`, not from `derive`. `rho-contracts.js`'s
 error messages do indeed makes this clear. The error printed is:
 
-      \`fn()\` broke its contract. Expected a number, but got '**100.5**'
+      `fn()` broke its contract. Expected a number, but got '**100.5**'
       for the return value of the call.
 
-`ho-contracts.js` is an implementation of the paper [*Contracts for higher-order
+`rho-contracts.js` is an implementation of the paper [*Contracts for higher-order
 functions*](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
 ICFP 2002.  The paper formalizes the notion of blame, describes the
 blame-tracking algorithm necessary to report blame correctly, and proves the
 algorithm correct.
       
-This implementation follows the paper closely with one limitation. `ho-contracts.js`
+This implementation follows the paper closely with one limitation. `rho-contracts.js`
 does not report blame in term of the name of the module interacting. It only
 reports the function names.
 
 
 ### Contracts on Functions-as-Values
 
-`ho-contracts.js`'s higher-order contracts can also be used to check the correctness
+`rho-contracts.js`'s higher-order contracts can also be used to check the correctness
 of functions used as values (aka, stored inside data structures.) This is
 clearly very useful in JavaScript where functions-in-data are used
 everywhere. In JavaScript, objects are constructed by putting functions into a
@@ -207,7 +207,7 @@ For example:
 
 *(In a delightful instance of self-reference, the contract library is documented
  and checked using the contract library itself. If reading tutorials is not your thing,
- you may want to instead look at the contracts placed on `ho-contracts.js`'s functions
+ you may want to instead look at the contracts placed on `rho-contracts.js`'s functions
  and methods by reading `contract.face.js` directly.)*
 
 The contract library is typically `require`'d and bound to a variable called `c`:
@@ -312,7 +312,7 @@ your NodeJs module and keep the contracts created and used in that module in the
     null
 
 To prevent the `toString()` output of custom contracts from become unwieldy long and
-render the `ho-contracts.js`'s error messages difficult to read, call `.rename()`
+render the `rho-contracts.js`'s error messages difficult to read, call `.rename()`
 before storing them:
 
     > c.numberAsString = c.matches(/^[0-9]+(\.[0-9]+)?$/)
@@ -393,7 +393,7 @@ created at once in one expression, like this:
 
 Each argument's contract is specified in the call to `c.fun()` using a hash
 table containing exactly one field. The name of that field is used by
-`ho-contracts.js`'s error messages when the argument's check
+`rho-contracts.js`'s error messages when the argument's check
 fails. Note that the name of the argument in the contract can be different from the name
 of the argument in the implementation. This is sometime useful -- at time
 the implementation might want to uses a short name internally, yet still prefer to
@@ -528,7 +528,7 @@ contracts over data structures containing functions:
         ContractLibraryError: check: This contract requires wrapping. 
         Call wrap() instead and retain the wrapped result.
         
-By replacing `.check()` with `.wrap()`, `ho-contracts.js` will recur down the
+By replacing `.check()` with `.wrap()`, `rho-contracts.js` will recur down the
 array and wrap each function with the function contract:
 
         > var operations_wrapped = 
@@ -615,7 +615,7 @@ animal -- an error could go undetected:
 
 The `.ths()` method on function contracts can be used to add this additional
 check. In order to distinguish functions intended be used as methods,
-`ho-contracts.js` provides `c.method()`, which is a variant of `c.fun()` that
+`rho-contracts.js` provides `c.method()`, which is a variant of `c.fun()` that
 takes the contract on `this` as its first argument:
 
      > c.animal = c.object({ nLegs: c.number, 
@@ -629,7 +629,7 @@ defining the contract for animals refers to the contract for animals. When the
 so `c.animal` is not defined and the look up returns of `c.animal` returns
 `undefined`.
 
-`ho-contracts.js` provides a way to establish this cyclic reference in large part to
+`rho-contracts.js` provides a way to establish this cyclic reference in large part to
 make it possible to fully specify such contract on objects. The function
 `c.cyclic()` creates a temporary placeholder until we can close the cycle:
 
@@ -652,7 +652,7 @@ When using this better definition of `c.animal`, the error is caught as it shoul
 
 
 
-`ho-contracts.js` provides three additional pieces of functionality made specifically for
+`rho-contracts.js` provides three additional pieces of functionality made specifically for
 object contracts.
  
 - c.optional() : Contracts marked "optional" by the `c.optional()` function (as
@@ -719,6 +719,24 @@ And also
 - silentAnd
 - `c.fn()`
 - setErrorMessageInspectionDepth
+
+### Related Work
+
+- `rho-contracts.js` is an implementation of the paper [*Contracts for higher-order
+functions*](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
+ICFP 2002.  
+
+- The original and best implementation of the paper's ideas is
+  [racket/contract](http://doc.racket-lang.org/reference/contracts.html?q=contract)
+
+- [`contract.coffee`](http://disnetdev.com/contracts.coffee/) is a dialect of
+  CoffeeScript that also implements Racket's contracts.
+
+- `contract.coffee` runs on top of an of a [contract-checking
+  runtime](https://github.com/disnet/contracts.js) implemented in JavaScript
+  using Proxies, that is currently only implemented in Firefox 4+ and chrome/V8
+  with the experimental javascript flag enabled.
+
 
 
 ### License
