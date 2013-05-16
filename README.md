@@ -8,13 +8,11 @@ ho-contracts.js
 Racket-style Higher-Order Contracts in plain JavaScript
 
 
-# Contract.js
-
 ## Introduction
 
 *(scroll down to* Tutorial *to skip the intro)*
 
-`Contract.js` is an implementation of Racket's higher-order contracts library in
+`ho-contracts.js` is an implementation of Racket's higher-order contracts library in
 JavaScript. It is an attempt to bring to JavaScript the reliability benefits we
 usually get from static types, namely:
 
@@ -37,15 +35,15 @@ notice. When I couldn't stand it anymore, I wrote this contract library.
 
 ### Run-time vs Compile-time
 
-`Contract.js` is purely a run-time checker. It will never give a compile-time
-error; it will never refuse to run your code. `Contract.js` is an assert library
+`ho-contracts.js` is purely a run-time checker. It will never give a compile-time
+error; it will never refuse to run your code. `ho-contracts.js` is an assert library
 where the assertions are written in a style similar to that of a static type
 system, and whose checking discipline is sufficiently strict to provide similar
 guarantees as a type system (though not the same.)
 
 ### Higher-order contracts
 
-`Contract.js` is an *higher-order* contract library, as opposed to
+`ho-contracts.js` is an *higher-order* contract library, as opposed to
 run-of-the-mill assertion library, which means that it provides the ability to
 check assertions on functions received as an arguments, and on function returned from
 functions. When implementing `derive(fn, deltaX)`, it is trivial to add an assert
@@ -81,7 +79,7 @@ number.
 
 The `derive` function itself is created as an anonymous function using JavaScript's
 own `function` keyword. The newly created anonymous function is then immediately
-wrapped with a contract-checking shell, using `Contract.js`' `.wrap()` method on
+wrapped with a contract-checking shell, using `ho-contracts.js`' `.wrap()` method on
 contracts. The result of `.wrap()` is a function that:
 
 1. checks that the given arguments passes their contracts (aka, that `fn` 
@@ -92,7 +90,7 @@ contracts. The result of `.wrap()` is a function that:
 4. passes the result through to the to the original caller.
 
 In addition, at the moment of the call to the original function (Step 2 above),
-`Contract.js` will `.wrap()` the function passed-in for `fn`. This way `fn`
+`ho-contracts.js` will `.wrap()` the function passed-in for `fn`. This way `fn`
 itself will be protected by a contract shell during the entire duration of the
 execution of the body of `derive`, and all its invocations will be checked
 against the contract.
@@ -148,26 +146,26 @@ the implementation of `derive`. But that is incorrect. The error is not that
 broke its contract -- or more precisely, the module calling `derive` was
 contractually required to provide a function that would only return numbers when
 called, but it failed to abide to its responsibility. The error message should
-make it clear that the failure comes from `fn`, not from `derive`. `Contract.js`'s
+make it clear that the failure comes from `fn`, not from `derive`. `ho-contracts.js`'s
 error messages do indeed makes this clear. The error printed is:
 
       \`fn()\` broke its contract. Expected a number, but got '**100.5**'
       for the return value of the call.
 
-`Contract.js` is an implementation of the paper [*Contracts for higher-order
+`ho-contracts.js` is an implementation of the paper [*Contracts for higher-order
 functions*](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
 ICFP 2002.  The paper formalizes the notion of blame, describes the
 blame-tracking algorithm necessary to report blame correctly, and proves the
 algorithm correct.
       
-This implementation follows the paper closely with one limitation. `Contract.js`
+This implementation follows the paper closely with one limitation. `ho-contracts.js`
 does not report blame in term of the name of the module interacting. It only
 reports the function names.
 
 
 ### Contracts on Functions-as-Values
 
-`Contract.js`'s higher-order contracts can also be used to check the correctness
+`ho-contracts.js`'s higher-order contracts can also be used to check the correctness
 of functions used as values (aka, stored inside data structures.) This is
 clearly very useful in JavaScript where functions-in-data are used
 everywhere. In JavaScript, objects are constructed by putting functions into a
@@ -209,7 +207,7 @@ For example:
 
 *(In a delightful instance of self-reference, the contract library is documented
  and checked using the contract library itself. If reading tutorials is not your thing,
- you may want to instead look at the contracts placed on `Contract.js`'s functions
+ you may want to instead look at the contracts placed on `ho-contracts.js`'s functions
  and methods by reading `contract.face.js` directly.)*
 
 The contract library is typically `require`'d and bound to a variable called `c`:
@@ -242,7 +240,7 @@ For completeness, there are also
 - `c.falsy` : accepts only values that selects the `else` branch of a JavaScript
 conditional
 - `c.truthy` : accepts only values that select the `if` branch.
-- `c.value() : accepts only the given value and nothing else.
+- `c.value()` : accepts only the given value and nothing else.
 - `c.any` : the contract that accepts everything
 - `c.nothing` : the contract that rejects everything
 
@@ -277,18 +275,25 @@ it passes any one of the given contracts:
     c.string: Expected string, but got { x: 10 }
 
 The `c.or()` contracts makes it possible to specify types for the kind of
-heterogeneous functions that are common in idiomatic JavaScript, but refused
-outright by most static type systems.
+heterogeneous functions that are common in idiomatic JavaScript, but that would
+be refused outright by most static type systems (that is so awesome.)
 
 
 ### Storing Custom Contracts
 
 The contract library provides a rich collection of contract function to
-construct sophisticated contracts from simple one, like
-`c.or()` as we just saw, as well as `c.and()`, and `c.matches()` (which accepts only
-strings that match the given regular expressions). In all likelihood, you will
-be instantiating a large number of custom contracts. It is customary to
-create a hash to contain the custom contract created an application or a module:
+construct sophisticated contracts from simple one, such as:
+
+- `c.or()` : as we just saw, accepts value that passes at least one of the given
+  contracts.
+
+- `c.and()` : accepts only values that pass all of the given contracts.
+
+- `c.matches()` : accepts only strings that match the given regular expressions.
+
+In all likelihood, you will be instantiating a large number of custom
+contracts. It is customary to create a hash to contain the custom contract
+created in an application or in a particular module:
 
     > var cc = {}  // custom contracts
     > cc.numberAsAString = c.matches(/^[0-9]+(\.[0-9]+)?$/)
@@ -307,7 +312,7 @@ your NodeJs module and keep the contracts created and used in that module in the
     null
 
 To prevent the `toString()` output of custom contracts from become unwieldy long and
-render the `Contract.js`'s error messages difficult to read, call `.rename()`
+render the `ho-contracts.js`'s error messages difficult to read, call `.rename()`
 before storing them:
 
     > c.numberAsString = c.matches(/^[0-9]+(\.[0-9]+)?$/)
@@ -329,8 +334,9 @@ contract:
     The full value being checked was:
     [ 1, 2, 3, 45.2, 5, 6 ]
 
-A `c.tuple()` checks that the array has exactly the given number of items, no
-more no less, and that each item passes its corresponding contract:
+A `c.tuple()` contract checks that the array has at least the given number of items
+(having extra items is OK). Then it checks that each item passes its
+corresponding contract:
 
     > c.tuple(c.number, c.string).check([10, "ten"])   // ok
     [ 10, 'ten' ]
@@ -358,7 +364,7 @@ given contract:
 
 Contract on functions are implemented by wrapping the implementing
 function with a contract-checking shell. This is achieved with the `.wrap()`
-method on contracts.
+method on contracts:
 
     > function square_implementation(x) { return x * x }
     > var square_contract = c.fun ( { x: c.number } )
@@ -387,15 +393,15 @@ created at once in one expression, like this:
 
 Each argument's contract is specified in the call to `c.fun()` using a hash
 table containing exactly one field. The name of that field is used by
-`Contract.js`'s error messages when the argument's check
+`ho-contracts.js`'s error messages when the argument's check
 fails. Note that the name of the argument in the contract can be different from the name
 of the argument in the implementation. This is sometime useful -- at time
 the implementation might want to uses a short name internally, yet still prefer to
 give users a long-form variable name in the error messages:
 
     var normalizeTime = c.fun( { secondSinceEpoc: c.number } )
-                  .wrap(
-      function (s) { return s % 60 } )
+                         .wrap(
+                           function (s) { return s % 60 } )
     > normalizeTime(124526)
     26
     > normalizeTime(null)
@@ -522,7 +528,7 @@ contracts over data structures containing functions:
         ContractLibraryError: check: This contract requires wrapping. 
         Call wrap() instead and retain the wrapped result.
         
-By replacing `.check()` with `.wrap()`, `Contract.js` will recur down the
+By replacing `.check()` with `.wrap()`, `ho-contracts.js` will recur down the
 array and wrap each function with the function contract:
 
         > var operations_wrapped = 
@@ -538,7 +544,7 @@ checking-shells is unnoticeable:
         DEBUG: 10
         DEBUG: 25
 
-But if we misuse one the of functions, the checking shell throws an
+But if we misuse one of the functions, the checking shell throws an
 exception. The error provided clearly identifies the source of the fault:
 
         > operations_wrapped.foreach(function(fn) { fn("five") }
@@ -567,7 +573,8 @@ normal functions, contracts on objects follow the usage described in the previou
 three sections *Data Structure Contracts*, *Contracts on Functions* and *Wrapping
 vs Checking*. 
 
-    > String.prototype.repeat = function( num ) {
+    > String.prototype.repeat = function( num ) {   // A helper function on
+                                                       String, just for fun.
         return new Array(num + 1).join(this);
       }
 
@@ -608,7 +615,7 @@ animal -- an error could go undetected:
 
 The `.ths()` method on function contracts can be used to add this additional
 check. In order to distinguish functions intended be used as methods,
-`Contract.js` provides `c.method()`, which is a variant of `c.fun()` that
+`ho-contracts.js` provides `c.method()`, which is a variant of `c.fun()` that
 takes the contract on `this` as its first argument:
 
      > c.animal = c.object({ nLegs: c.number, 
@@ -622,30 +629,30 @@ defining the contract for animals refers to the contract for animals. When the
 so `c.animal` is not defined and the look up returns of `c.animal` returns
 `undefined`.
 
-`Contract.js` provides a way to establish this cyclic reference in large part to
+`ho-contracts.js` provides a way to establish this cyclic reference in large part to
 make it possible to fully specify such contract on objects. The function
 `c.cyclic()` creates a temporary placeholder until we can close the cycle:
 
-   > c.animal = c.cyclic()
+    > c.animal = c.cyclic()
 
 The placeholder returned by `c.cyclic()` has only one useful method:
-`.closeCycle()`, which must be called with the final contract:
+`.closeCycle()`, which must be called with the actual contract:
 
-   > c.animal.closeCycle(c.object({ nLegs: c.number, 
-                                    name:  c.string,
-                                    speak: c.method(c.animal, { n: c.number }).returns(c.string) }))
+    > c.animal.closeCycle(c.object({ nLegs: c.number, 
+                                     name:  c.string,
+                                     speak: c.method(c.animal, { n: c.number }).returns(c.string) }))
 
 When using this better definition of `c.animal`, the error is caught as it should:
 
-    > var speak = tweetie.speak
-    > speak(2)
-    ContractError: on `speak()`
-    Expected object, but got undefined
-    for this `this` argument of the call.
+     > var speak = tweetie.speak
+     > speak(2)
+     ContractError: on `speak()`
+     Expected object, but got undefined
+     for this `this` argument of the call.
 
 
 
-`Contract.js` provides three additional pieces of functionality made specifically for
+`ho-contracts.js` provides three additional pieces of functionality made specifically for
 object contracts.
  
 - c.optional() : Contracts marked "optional" by the `c.optional()` function (as
@@ -653,14 +660,14 @@ object contracts.
   used to specify optional fields of objects. A field is considered missing if
   is not set, or if it is set to null. All these are OK:
 
-    > c.car = c.object({ carModel: c.string,
-                         trunkSize: c.optional(c.number) }) // missing to indicate a sport car with no trunk  
+     > c.car = c.object({ carModel: c.string,
+                          trunkSize: c.optional(c.number) }) // missing to indicate a sport car with no trunk  
 
-    > c.car.check({ carModel: "MINI Cooper Coupe",          // OK
-                    trunkSize: 9.8 })  
+     > c.car.check({ carModel: "MINI Cooper Coupe",          // OK
+                     trunkSize: 9.8 })  
 
-    > c.car.check({ carModel: "Infiniti IPL G Convertible", // OK
-                    trunkSize: null })
+     > c.car.check({ carModel: "Infiniti IPL G Convertible", // OK
+                     trunkSize: null })
 
 Or:
 
@@ -676,45 +683,42 @@ But not:
   specified in the contract. Calling `.strict()` returns a contract that
   disallows them. 
 
-    > c.car.check({ carModel: "semitruck", towing: true }) // this is fine
+     > c.car.check({ carModel: "semitruck", towing: true }) // this is fine
 
-    > c.car.strict().check({ carModel: "semitruck", towing: true }) // but this is not
-    ContractError: Found the extra field `towing` in { carModel: 'semitruck', towing: true }
+     > c.car.strict().check({ carModel: "semitruck", towing: true }) // but this is not
+     ContractError: Found the extra field `towing` in { carModel: 'semitruck', towing: true }
 
 - `.extend` : 
 
 - .strict on tuples
 
 
-### Cyclic Contracts
+### More Functionality
 
-- cyclic/closeCycle and forwardRef/setRef
+Additional functionality that's not documented yet:
 
+- forwardRef/setRef
+- Contracts on Whole Modules, `publish()`
 
-### Contracts on Whole Modules
-
-- publish
-
-### Documentation Feature
-
--- .doc
--- .theDoc
--- documentType
--- documentTable
--- document category
+- The partially documented documentation feature:
+- .doc
+- .theDoc
+- documentType
+- documentTable
+- document category
 - document module
 
-### Additional Features
+And also
 
--- anyFunction
--- isA
--- the contract contract
--- implicity promotion to contract
--- toContract: promoting values to a contract explicitely.
--- quacksLike
--- silentAnd
--- `c.fn()`
--- setErrorMessageInspectionDepth
+- anyFunction
+- isA
+- the contract contract
+- implicity promotion to contract
+- toContract: promoting values to a contract explicitely.
+- quacksLike
+- silentAnd
+- `c.fn()`
+- setErrorMessageInspectionDepth
 
 
 ### License
