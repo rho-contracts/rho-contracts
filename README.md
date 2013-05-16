@@ -5,7 +5,7 @@
 rho-contracts.js
 ===============
 
-Racket-style Higher-Order Contracts in Plain JavaScript
+**R**acket-style **H**igher-**O**rder Contracts in Plain JavaScript
 
 
 ## Introduction
@@ -25,7 +25,7 @@ usually get from static types, namely:
 * Types act as a checked documentation for the expected input-output type of
    functions.
 
-* Types provide an fulcrum against which we can leverage a refactoring.
+* Types provide a fulcrum against which we can leverage a refactoring.
 
 Among the dynamic languages, JavaScript is suffering from the absence of static
 types quite, because of it propensity for implicitly converting everything
@@ -697,6 +697,7 @@ But not:
 
 Additional functionality that's not documented yet:
 
+- c.pred
 - forwardRef/setRef
 - Contracts on Whole Modules, `publish()`
 
@@ -730,12 +731,29 @@ ICFP 2002.
   [racket/contract](http://doc.racket-lang.org/reference/contracts.html?q=contract)
 
 - [`contract.coffee`](http://disnetdev.com/contracts.coffee/) is a dialect of
-  CoffeeScript that also implements Racket's contracts.
+  CoffeeScript that like `rho-contracts.js` also implements Racket's contracts.
 
-- `contract.coffee` runs on top of an of a [contract-checking
+- `contract.coffee` runs on top of a [contract-checking
   runtime](https://github.com/disnet/contracts.js) implemented in JavaScript
   using Proxies, that is currently only implemented in Firefox 4+ and chrome/V8
   with the experimental javascript flag enabled.
+
+- [ristretto-js](https://code.google.com/p/ristretto-js/wiki/Documentation)
+  implements a run-time checker for types written in Haskell syntax inside of
+  specification strings. It suffers from the troubles of externally embedded
+  languages, namely that it exists separate from its host language. It support only
+  a limited number of basic type (Int, Num, String, Bool, Object, Array) with no
+  possibility of extensions that's available and its type name space is separate
+  from the JavaScript name space and module machinery.
+
+
+- [jsContract](http://kinsey.no/blog/index.php/2010/02/03/jscontract-code-contracts-for-javascript/),
+  [cerny.js](http://www.cerny-online.com/cerny.js/documentation/guides/contracts),
+  are good-old (bad-old?) Eiffel-style contract libraries. True to their Eiffel
+  roots, they require lots of code for little benefit, in particular they cannot
+  check higher-order functions, cannot separate specification from
+  implementation. See Findler and Felleisen for a more thorough comparison.
+
 
 
 
