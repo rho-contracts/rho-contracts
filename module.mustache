@@ -1,0 +1,84 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<html>
+
+
+<style type="text/css">
+body { margin-left: 20%; margin-right: 20%; }
+pre { margin-left: 30pt; background-color: rgb(223,223,233); }
+code { background-color: rgb(223,223,233);  }
+table { border: 1px solid grey; padding: 10pt; }
+td { padding: 7px; padding-top: 35px; margin-right: 15pt; vertical-align: top; }
+h3, .type-name { font-size: 40px; font-weight: bold; margin-top: 40px; }
+
+.field-type, .value-type { width: 180px; }
+
+</style>
+
+
+<head>
+  <title>{{name}}</title>
+</head>
+
+<body>
+
+<h1>{{name}}</h1>
+
+<p>{{{doc}}}</p>
+
+{{#categories}}
+
+{{#hasHeader}}
+<h2 class="category">{{name}}</h2>
+<p class="types-category-doc">{{{doc}}}</p>
+{{/hasHeader}}
+
+{{#hasTypes}}
+<h3>Types</h3>
+{{#types}}
+<div class="type-name">{{name}}</div>
+<div class="type-doc">{{{doc}}}</div>
+
+{{^isObject}}
+<code class="type-type">{{type}}</code>
+{{/isObject}}
+
+{{#isObject}}
+<table class="field-table">
+{{#fields}}
+<tr class="field-row">
+  <td class="field-name">{{name}}</td>
+  <td class="field-type"><code>{{type}}</code></td>
+  <td class="field-doc">{{{doc}}}</td></tr>
+{{/fields}}
+</table>
+{{/isObject}}
+
+</table>
+
+{{/isObject}}
+  
+</tr>
+{{/types}}
+</types>
+{{/hasTypes}}
+
+{{#hasValues}}
+<h3>Values and Functions</h3>
+
+<table class="values-table">
+{{#values}}
+<tr class="value">
+  <td class="value-name">{{name}}</td>
+  <td class="value-type"><code>{{type}}</code></td>
+  <td class="value-doc">{{{doc}}}</td></tr>
+{{/values}}
+</table>
+{{/hasValues}}
+
+{{/categories}}
+
+</body>
+</html>
