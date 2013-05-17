@@ -5,7 +5,7 @@
 rho-contracts.js
 ===============
 
-**R**acket-style **H**igher-**O**rder Contracts in Plain JavaScript
+**R**acket-style **H**igher-<b>O</b>rder Contracts in Plain JavaScript
 
 
 ## Introduction
