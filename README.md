@@ -655,19 +655,21 @@ When using this better definition of `c.animal`, the error is caught as it shoul
 `rho-contracts.js` provides three additional pieces of functionality made specifically for
 object contracts.
  
-- c.optional() : Contracts marked "optional" by the `c.optional()` function (as
+- `c.optional()` : Contracts marked "optional" by the `c.optional()` function (as
   discussed earlier in the *Contracts for Optional Arguments* section) are also
   used to specify optional fields of objects. A field is considered missing if
-  is not set, or if it is set to null. All these are OK:
+  is not set, or if it is set to null. All these are OK.
 
-     > c.car = c.object({ carModel: c.string,
-                          trunkSize: c.optional(c.number) }) // missing to indicate a sport car with no trunk  
+<div>
 
-     > c.car.check({ carModel: "MINI Cooper Coupe",          // OK
-                     trunkSize: 9.8 })  
+    > c.car = c.object({ carModel: c.string,
+                         trunkSize: c.optional(c.number) }) // missing to indicate a sport car with no trunk  
 
-     > c.car.check({ carModel: "Infiniti IPL G Convertible", // OK
-                     trunkSize: null })
+    > c.car.check({ carModel: "MINI Cooper Coupe",          // OK
+                    trunkSize: 9.8 })  
+
+    > c.car.check({ carModel: "Infiniti IPL G Convertible", // OK
+                    trunkSize: null })
 
 Or:
 
@@ -682,6 +684,8 @@ But not:
 - `.strict()` : By default, objects are allowed to have additional fields not
   specified in the contract. Calling `.strict()` returns a contract that
   disallows them. 
+
+<div>
 
      > c.car.check({ carModel: "semitruck", towing: true }) // this is fine
 
