@@ -1,0 +1,29 @@
+{
+  "name": "rho-contracts",
+  "version": "0.0.2",
+  "description": "Racket-style Higher Order Contracts in Plain Javascript",
+  "main": "index.js",
+  "keywords": [
+    "contracts"
+  ],
+  "dependencies": {
+    "callsite": "*",
+    "underscore": "*",
+    "should": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sefaira/rho-contracts.js.git"
+  },
+  "readmeFilename": "README.md",
+  "gitHead": "aef2505b61452b8322c0d5ec57144190ac09f175",
+  "bugs": {
+    "url": "https://github.com/sefaira/rho-contracts.js/issues"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "make test"
+  },
+  "author": "Guillaume Marceau <gmarceau@sefaira.com> (http://sefaira.com/)",
+  "license": "Mozilla Public License Version 2.0"
+}
