@@ -9,7 +9,7 @@ rho-contracts.js
 
 ## Installation
 
-npm install rho-contracts
+`npm install rho-contracts`
 
 ## Introduction
 
