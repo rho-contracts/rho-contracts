@@ -119,11 +119,11 @@ Given the definition for `derive` above:
       ContractError: Wrong number of arguments, expected 2 but got 1
 
       // Error: calling with the wrong kind of function:
-      > var d = derive(function(x) { return "**" + x + "**" }, 1.0)
+      > var fprime = derive(function(x) { return "**" + x + "**" }, 1.0)
 
-      // The contract-checking shell is now installed around `fn` inside of `d`;
-      // throws an error when called:
-      > d(100)
+      // There is now a contract-checking shell installed around `fprime` that
+      // throws an error when `fprime` is called:
+      > fprime(100)
       ContractError: `fn()` broke its contract
       Expected number, but got '**100.5**'
       for the return value of the call.
@@ -158,9 +158,9 @@ ICFP 2002.  The paper formalizes the notion of blame, describes the
 blame-tracking algorithm necessary to report blame correctly, and proves the
 algorithm correct.
       
-This implementation follows the paper closely with one limitation. `rho-contracts.js`
-does not report blame in term of the name of the module interacting. It only
-reports the function names.
+This implementation follows the paper closely, though without Racket's macro
+system it was not possible to implement the report of blame in term of the name
+of the module interacting. `rho-contracts.js` only reports the function names.
 
 
 ### Contracts on Functions-as-Values
@@ -208,7 +208,7 @@ For example:
 *(In a delightful instance of self-reference, the contract library is documented
  and checked using the contract library itself. If reading tutorials is not your thing,
  you may want to instead look at the contracts placed on `rho-contracts.js`'s functions
- and methods by reading `contract.face.js` directly.)*
+ and methods by reading [`contract.face.js`](https://github.com/sefaira/rho-contracts.js/blob/master/contract.face.js) directly.)*
 
 The contract library is typically `require`'d and bound to a variable called `c`:
 

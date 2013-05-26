@@ -10,9 +10,7 @@
 
 var util = require('util');
 var __ = require('underscore'); // '__' because node already binds '_' 
-require('callsite');
-if (!__stack) throw new Error('callsite library failed to load');
-
+var grabStack = require('callsite');
 
 exports.privates = {};
 
@@ -139,7 +137,7 @@ function cleanStack(stack) {
 }
 
 function captureCleanStack() { 
-  return cleanStack(__stack || []);
+  return cleanStack(grabStack() || []);
 }
 
 function prettyPrintStack(stack) {
@@ -177,7 +175,7 @@ ContractError.prototype = __.extend(Error.prototype, {
 
   captureStack: function () {
     var self = this;
-    self.renderedStack = prettyPrintStack(cleanStack(__stack || []))
+    self.renderedStack = prettyPrintStack(cleanStack(grabStack() || []))
     Object.defineProperty(self, 'stack', {
       get: function () {
         return this.name + ": " + this.message + "\n" + self.renderedStack;
