@@ -7,6 +7,9 @@ rho-contracts.js
 
 **R**acket-style **H**igher-<b>O</b>rder Contracts in Plain JavaScript
 
+## Installation
+
+npm install rho-contracts
 
 ## Introduction
 
