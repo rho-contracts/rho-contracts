@@ -57,7 +57,7 @@ everywhere `fn` is called -- that's not great. Higher-order contracts make it
 possible to place the specification next to the definition of `derive`, where it
 belongs, like this:
 
-    var c = require('contract')
+    var c = require('rho-contracts')
 
     // derive: returns a function that is the numerically-computed derivative
     //         of the given function.
@@ -215,7 +215,7 @@ For example:
 
 The contract library is typically `require`'d and bound to a variable called `c`:
 
-    > var c = require('contract')
+    > var c = require('rho-contracts')
 
 ### Basic Value Contracts
 
@@ -309,7 +309,7 @@ Another option is to make a clone of the contract library at the top of
 your NodeJs module and keep the contracts created and used in that module in the clone:
 
     > var __ = require('underscore')
-    > var c = __.clone(require('contract'));
+    > var c = __.clone(require('rho-contracts'));
     > c.numberAsString = c.matches(/^[0-9]+(\.[0-9]+)?$/)
     > c.or(c.falsy, c.numberAsString).check(null)     // ok, null is falsy
     null
@@ -489,7 +489,7 @@ argument, a contract that has been marked optional makes that argument optional
 (the contract itself is not affected otherwise). All arguments to the right of an optional
 argument must be optional as well.
 
-    > var c = require('./index')
+    > var c = require('rho-contracts')
     > var util = require('util')
 
     > var x = 0
