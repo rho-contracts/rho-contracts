@@ -26,6 +26,6 @@
   "scripts": {
     "test": "make test"
   },
-  "author": "Guillaume Marceau <gmarceau@sefaira.com> (http://sefaira.com/)",
+  "author": "Guillaume Marceau <guillaume.marceau@sefaira.com> (http://sefaira.com/)",
   "license": "Mozilla Public License Version 2.0"
 }
