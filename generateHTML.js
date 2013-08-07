@@ -6,7 +6,7 @@
 var __ = require('underscore');
 var fs = require('fs');
 var m = require("mustache");
-var c = require('./contact.face');
+var c = require('./contract.face');
 var s = require('github-flavored-markdown');
 
 var moduleTemplateData = {
