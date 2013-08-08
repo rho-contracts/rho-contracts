@@ -145,7 +145,7 @@ function generateHTML() {
                          renderModule('Contracts')
                         );
     console.log(html);
-    fs.writeFileSync("/home/gmarceau/win/sefaira/output.html", html, "ascii");        
+    fs.writeFileSync("output.html", html, "ascii");        
   });
   
 }
