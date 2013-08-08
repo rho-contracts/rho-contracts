@@ -11,7 +11,8 @@
     "underscore": "1.4.x",
     "mustache": "0.7.x",
     "should": "1.2.x",
-    "mocha": "1.12.x"
+    "mocha": "1.12.x",
+    "github-flavored-markdown": "1.0.1"
   },
   "repository": {
     "type": "git",
