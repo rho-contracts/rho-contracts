@@ -302,13 +302,17 @@ function checkWContext(contract, data, context) {
 }
 
 function wrapWContext(contract, data, context) {
-  return contract.wrapper(data, function (nextContract, nextV, nextContext) {
-    if (nextContext !== stackContextItems.silent) { context.stack.push(nextContext);}
-    var c = toContract(nextContract);
-    var subWrap = (!c.needsWrapping ? nextV : wrapWContext(c, nextV, context));
-    if (nextContext !== stackContextItems.silent) { context.stack.pop();}
-    return subWrap;
-  }, context);
+  if (contract.isOptional && !data) {
+    return data;
+  } else {
+    return contract.wrapper(data, function (nextContract, nextV, nextContext) {
+      if (nextContext !== stackContextItems.silent) { context.stack.push(nextContext);}
+      var c = toContract(nextContract);
+      var subWrap = (!c.needsWrapping ? nextV : wrapWContext(c, nextV, context));
+      if (nextContext !== stackContextItems.silent) { context.stack.pop();}
+      return subWrap;
+    }, context);
+  }
 }
 
 function checkWrapWContext(contract, data, context) { 
@@ -584,18 +588,20 @@ function or (/* ... */) {
     context.fail = oldFail;
 
     if (!success) {
-      context.fail(new ContractError(context, 
-                                     "none of the contracts passed:\n" +
-                                     __(allContracts).map(function(c) {return " - " + c.toString();}).join("\n") +
-                                     "\nThe failures were:\n" +
-                                     __(exceptions).map(function(c_e) {return c_e.c.toString() + ": " + c_e.e.message;}).join("") + '\n')
+      var msg = 
+        "none of the contracts passed:\n" +
+        __(allContracts).map(function(c) {return " - " + c.toString();}).join("\n") +
+        "\n\nThe failures were:\n" +
+        __(exceptions).map(function(c_e, i) {return "["+ (i+1) + "] --\n" + c_e.c.toString() + ": " + c_e.e.message;}).join("\n\n") + '\n';
+
+      context.fail(new ContractError(context, msg)
                    .fullContractAndValue(context));
     }
     return success; // return the successful contract to self.wrapper
   };
   self.wrapper = function (data, next, context) {
     var self = this; 
-    var c = self.nestedChecker(data, function () { }); // this is a bit of a hack.
+    var c = self.nestedChecker(data, function () { }, context); // this is a bit of a hack.
     return next(c, data, stackContextItems.or);
   };
   self.needsWrappingIfAny(__.union(self.contracts, self.wrappingContracts));
