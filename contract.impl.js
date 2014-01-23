@@ -648,7 +648,7 @@ function array(itemContract) {
   self.firstChecker = __.isArray;
   self.nestedChecker = function (data, next) { 
     var self = this; 
-    data.forEach(function (item, i) {
+    __.each(data, function (item, i) {
       next(self.itemContract, item, stackContextItems.arrayItem(i));
     });
   };
