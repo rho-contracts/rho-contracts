@@ -214,7 +214,9 @@ describe ("strict", function () {
   it ("passes double strict on a good object", function () { c.object({x: c.value(10)}).strict().strict().check({x: 10}).should.ok; });
   it ("passes double strict on a good tuple", function () { c.tuple(c.value(10)).strict().strict().check([10]).should.ok; });
   it ("fails an object", function () { (function () { c.object({x: c.value(10)}).strict().check({x: 10, y:20}); }).should.throwContract(); });
+  it ("fails an object's field", function () { (function () { c.object({x: c.value(10)}).strict().check({x: 20}); }).should.throwContract(); });
   it ("fails an object, multiple", function () { (function () { c.object({x: c.value(10)}).strict().check({x: 10, y:20, z:30}); }).should.throwContract(); });
+  it ("fails a nested object", function () { (function () { c.object({x: c.object({y: c.value(10)}).strict() }).strict().check({x: {y: 10, z: 20}}); }).should.throwContract(); });
   it ("fails a tuple", function () { (function () { c.tuple(c.value(10)).strict().check([10, 20]); }).should.throwContract(); });
 });
 
