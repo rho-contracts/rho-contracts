@@ -789,7 +789,7 @@ function object(/*opt*/ fieldContracts) {
                         stringify(data) + "\n")
                        .fullContractAndValue());
         }
-        return true;
+        return oldNestedChecker.call(self, data, next, context);
       },
 
       strict: function () { var self = this; return self; }
