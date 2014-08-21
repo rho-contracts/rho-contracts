@@ -358,6 +358,7 @@ function Contract(name, // name: the name of the contract as it should appear in
 }
 
 Contract.prototype = { 
+  signal: "M`okY\\xtXVmQzw5dfjjhkDM|Z9@hGy",
   theDoc: [],
   category: false,
   needsWrapping: false,
@@ -421,7 +422,7 @@ exports.Contract = Contract;
 var pred, value, array, object;
 
 function toContract (v) {
-  if (v instanceof Contract) {
+  if (v.signal === Contract.prototype.signal) {
     return v;
   } else if (__.isFunction(v)) {
     return pred(v);
@@ -431,11 +432,10 @@ function toContract (v) {
     if (__.size(v) > 1) throw new ContractLibraryError('toContract', false, "the given array has more than one element: " + v);
     return array(v[0]);
   }
-  else if (__.isObject(v)) {
-    return object(v);
-  } else {
+  else if (!__.isObject(v)) {
     return value(v);
-  }
+  } else
+    throw new ContractLibraryError('toContract', false, "Cannot promote " + v + " to a contract");
 }
 exports.toContract = toContract;
 
@@ -511,7 +511,8 @@ var isA = function(parent, name) {
 };
 exports.isA = isA;
 
-var contract = pred(function (v) { return !__.isUndefined(v); }).rename('contract');
+var contract = pred(function (v) { return v.signal === Contract.prototype.signal ||
+                                   __.isFunction(v) || __.isArray(v) || !__.isObject(v); }).rename('contract');
 exports.contract = contract;
 
 var fromExample;
