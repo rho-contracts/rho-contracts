@@ -76,7 +76,7 @@ should.Assertion.prototype.throwType = function(type, message){
 
 describe ("toContract", function () {
   it ("passes contracts", function () { c.toContract(c.any).contractName.should.eql(c.any.contractName); });
-  it ("wraps objects", function () { c.toContract({}).should.be.an.instanceof(c.Contract); } );
+  it ("refuses to wrap objects", function () { (function () { c.toContract({})}).should.throwError(/Cannot promote/); } );
   it ("wraps arrays", function () { c.toContract([c.any]).should.be.an.instanceof(c.Contract); });
   it ("wraps values", function () { c.toContract(5).contractName.should.be.eql(c.value(5).contractName); });
 });
@@ -234,7 +234,7 @@ describe ("fn", function () {
   var strIdC = c.fn(c.number).returns(c.string);
   var twoIdC = c.fn(c.number, c.string).returns(c.tuple(c.number, c.string));
   var manyIdC = c.fn().extraArgs([c.number]).returns(c.number);
-  var thisC = c.fn(c.number).ths({x: c.string}).returns(c.string);
+  var thisC = c.fn(c.number).ths(c.object({x: c.string})).returns(c.string);
 
   var oneOptC = c.fn(c.number, c.optional(c.number));
 
@@ -280,7 +280,7 @@ describe ("fun", function () {
   var strIdC = c.fun({ the_arg: c.number }).returns(c.string);
   var twoIdC = c.fun({ fstArg: c.number}, { sndArg: c.string}).returns(c.tuple(c.number, c.string));
   var manyIdC = c.fun().extraArgs([c.number]).returns(c.number);
-  var thisC = c.fun({y: c.number}).ths({x: c.string}).returns(c.string);
+  var thisC = c.fun({y: c.number}).ths(c.object({x: c.string})).returns(c.string);
 
   it ("is a function", function () { idC.wrap(id).should.instanceof(Function); });
   it ("passes id(number)", function () { idC.wrap(id)(5).should.eql(5); });
