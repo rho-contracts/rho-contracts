@@ -8,10 +8,10 @@
   ],
   "dependencies": {
     "callsite": "1.0.0",
-    "underscore": "1.4.x",
+    "underscore": "1.5.x",
     "mustache": "0.7.x",
     "should": "1.2.x",
-    "mocha": "1.12.x",
+    "mocha": "1.14.x",
     "github-flavored-markdown": "1.0.1"
   },
   "repository": {
