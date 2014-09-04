@@ -128,7 +128,7 @@ exports.setErrorMessageInspectionDepth = function(depth) {
 function cleanStack(stack) {
   var stack = clone(stack);
   stack.shift();
-  var irrelevantFileNames = [ /\/contract.face.js$/, /\/contract.impl.js$/, /\/underscore.js$/, 
+  var irrelevantFileNames = [ /\/contract.face.js$/, /\/contract.impl.js$/, /rho-contracts.js\/index.js$/, /\/underscore.js$/, 
                               /^native array.js$/, /^module.js$/, /^native messages.js$/, /^undefined$/ ];
   while(!__.isEmpty(stack)) {
     if (__.any(irrelevantFileNames, function (r) { 
