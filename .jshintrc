@@ -1,0 +1,13 @@
+{
+  "eqeqeq": true,
+  "bitwise": true,
+  "forin": true,
+  "immed": true,
+  "latedef": true,
+  "newcap": true,
+  "undef": true,
+  "strict": false,
+  "es3": true,
+  "smarttabs": true,
+  "sub": true
+}
