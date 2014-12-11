@@ -9,14 +9,14 @@
 /*global exports, require */
 
 var util = require('util');
-var __ = require('underscore'); // '__' because node already binds '_' 
+var __ = require('underscore'); // '__' because node already binds '_'
 var grabStack = require('callsite');
 
 exports.privates = {};
 
 
 // Throughout this file, `var self = this` indicates that the function is
-// intended to be called (and thought of) as a method (regardless of whether 
+// intended to be called (and thought of) as a method (regardless of whether
 // `self` is actually used within the body of the function.
 
 // Without `Error.stackTraceLimit = Infinity;`, often no stack trace is printed at all. By default, node records only 10 stack
@@ -31,7 +31,7 @@ Error.stackTraceLimit = Infinity;
 // Helper Functions
 //
 
-function isMissing(v) { 
+function isMissing(v) {
   return __.isUndefined(v) || v === null;
 }
 
@@ -71,48 +71,48 @@ var stackContextItems = {
     return { short: (__.isNumber(arg) ? ".arg("+arg+")" : "."+arg),
              long: "for the " + (__.isNumber(arg) ? ith(arg) : "`"+arg+"`") + " argument of the call." };
   },
-  
+
   this: { short: ".this",
           long: "for this `this` argument of the call."},
-  
+
   result: { short: ".result",
             long: "for the return value of the call." },
-  
+
   extraArguments: { short: ".extraArguments",
                     long: "for the extra argument array of the call" },
-  
-  and: function(i) { 
+
+  and: function(i) {
     return { short: ".and("+i+")",
-             long: "for the " + ith(i) + " branch of the `and` contract." }; 
+             long: "for the " + ith(i) + " branch of the `and` contract." };
   },
-  
-  or: function(i) { 
-    return { short: ".or" }; 
+
+  or: function(i) {
+    return { short: ".or" };
   },
-  
+
   arrayItem: function (i) {
     return { short: "["+i+"]",
              long: "for the " + ith(i) + " element of the array.",
              i: i };
   },
-  
+
   tupleItem: function (i) {
     return { short: "["+i+"]",
              long: "for the " + ith(i) + " element of the tuple." };
   },
-  
+
   hashItem: function (k) {
     return { short: "." + k,
              long: "for the key `" + k + "` of the hash." };
   },
-  
+
   objectField: function (f) {
     return { short: "." + f,
              long: "for the field `" + f + "` of the object." };
   },
-  
-  silent: { short: "", long: "" } // .silent is special, tested with === in `checkWContext` 
-  
+
+  silent: { short: "", long: "" } // .silent is special, tested with === in `checkWContext`
+
 };
 
 //--
@@ -128,10 +128,10 @@ exports.setErrorMessageInspectionDepth = function(depth) {
 function cleanStack(stack) {
   var stack = clone(stack);
   stack.shift();
-  var irrelevantFileNames = [ /\/contract.face.js$/, /\/contract.impl.js$/, /rho-contracts.js\/index.js$/, /\/underscore.js$/, 
+  var irrelevantFileNames = [ /\/contract.face.js$/, /\/contract.impl.js$/, /rho-contracts.js\/index.js$/, /\/underscore.js$/,
                               /^native array.js$/, /^module.js$/, /^native messages.js$/, /^undefined$/ ];
   while(!__.isEmpty(stack)) {
-    if (__.any(irrelevantFileNames, function (r) { 
+    if (__.any(irrelevantFileNames, function (r) {
       return r.test(stack[0].getFileName()); })) {
       stack.shift();
     } else {
@@ -141,7 +141,7 @@ function cleanStack(stack) {
   return stack;
 }
 
-function captureCleanStack() { 
+function captureCleanStack() {
   return cleanStack(grabStack() || []);
 }
 
@@ -152,7 +152,7 @@ function prettyPrintStack(stack) {
   }).join('\n')
 }
 
-function ContractError(/*opt*/ context, /*opt*/ msg) { 
+function ContractError(/*opt*/ context, /*opt*/ msg) {
   Error.call(this, msg);
 
   this.name = 'ContractError';
@@ -171,7 +171,7 @@ function ContractError(/*opt*/ context, /*opt*/ msg) {
   }
 }
 
-ContractError.prototype = __.extend(Object.create(Error.prototype), {  
+ContractError.prototype = __.extend(Object.create(Error.prototype), {
 
   captureCleanStack: function () {
     var self = this;
@@ -184,12 +184,12 @@ ContractError.prototype = __.extend(Object.create(Error.prototype), {
   },
 
   blame: function(context) {
-    var self = this; 
-    
+    var self = this;
+
     self.context = context || self.context;
 
     var thingNameWithParens = self.context.thingName + (self.context.contract.isFunctionContract ? "()" : "");
-  
+
     if (!self.context.wrapping) {
       self.message += "check on `" + thingNameWithParens + "` failed";
     } else if (self.context.blameMe) {
@@ -200,39 +200,39 @@ ContractError.prototype = __.extend(Object.create(Error.prototype), {
   },
 
   expected: function(expected, data, /*opt*/ context) {
-    var self = this; 
-    
+    var self = this;
+
     self.context = context || self.context;
     self.expected = expected;
     self.data = data;
     self.message += "Expected " + expected + ", but got " + stringify(data) + "\n";
     return self;
   },
-  
+
   fullValue: function(/*opt*/ context) {
-    var self = this; 
-    
+    var self = this;
+
     self.context = context || self.context;
     if (!__.isFunction(self.context.data))    // Don't bother printing functions,
       if (!self.expected ||                   // if expected() has not already printed the value
-          !__.isEmpty(self.context.stack))    // or there is a stack, so expected() has printed only 
+          !__.isEmpty(self.context.stack))    // or there is a stack, so expected() has printed only
         //                                       a small piece of the value.
         self.message += "The full value being checked was:\n" + stringify(self.context.data) + "\n";
     return self;
   },
-  
+
   fullContract: function (/*opt*/ context) {
-    var self = this; 
-    
+    var self = this;
+
     self.context = context || self.context;
-    
+
     if (!__.isEmpty(self.context.stack)) {
       var stack = self.context.stack;
       var immediateContext = __.last(stack);
 
       if (stack[stack.length-2] === stackContextItems.extraArguments) {
         // Special case for error messages of extra arguments
-        // Invariant: the immediate context is always a stackContextItems.arrayItem, 
+        // Invariant: the immediate context is always a stackContextItems.arrayItem,
         // which always hash a `i` field
 
         self.message += "for the " + ith(immediateContext.i) + " extra argument of the call.\n"
@@ -251,10 +251,10 @@ ContractError.prototype = __.extend(Object.create(Error.prototype), {
     }
     return self;
   },
-  
+
   fullContractAndValue: function (/*opt*/ context) {
     var self = this;
-    
+
     self.fullContract(context);
     self.fullValue(context);
     return self;
@@ -263,7 +263,7 @@ ContractError.prototype = __.extend(Object.create(Error.prototype), {
 ContractError.prototype.constructor = ContractError;
 exports.ContractError = ContractError;
 
-function ContractLibraryError(fnName, /*opt*/ context, /*opt*/ msg) { 
+function ContractLibraryError(fnName, /*opt*/ context, /*opt*/ msg) {
   ContractError.call(this, context, msg);
   this.name = 'ContractLibraryError';
   this.functionName = fnName;
@@ -281,9 +281,7 @@ exports.ContractLibraryError = ContractLibraryError;
 // Basic recursive checking with path tracking
 //
 
-var toContract;
-
-function checkWContext(contract, data, context) { 
+function checkWContext(contract, data, context) {
   if (contract.isOptional && !data) {
     // ok
   } else {
@@ -293,7 +291,7 @@ function checkWContext(contract, data, context) {
     if (contract.needsWrapping && !context.wrapping) {
       throw new ContractLibraryError("check", context, "This contract requires wrapping. Call wrap() instead and retain the wrapped result.").fullContract()
     }
-    
+
     contract.nestedChecker(data, function(nextContract, nextV, nextContext) {
       if (nextContext !== stackContextItems.silent) { context.stack.push(nextContext);}
       checkWContext(toContract(nextContract), nextV, context);
@@ -316,10 +314,10 @@ function wrapWContext(contract, data, context) {
   }
 }
 
-function checkWrapWContext(contract, data, context) { 
+function checkWrapWContext(contract, data, context) {
   var c = toContract(contract);
   checkWContext(c, data, context);
-  if (!contract.needsWrapping) 
+  if (!contract.needsWrapping)
     return data;
   else {
     if (!context.wrappedAt) {
@@ -330,12 +328,12 @@ function checkWrapWContext(contract, data, context) {
 }
 
 function newContext(thingName, data, contract, wrapping) {
-  return { thingName: thingName, 
-           blameMe: true, 
-           data: data, 
-           stack: [], 
+  return { thingName: thingName,
+           blameMe: true,
+           data: data,
+           stack: [],
            fail: function (e) { e.captureCleanStack(); throw e },
-           contract: contract, 
+           contract: contract,
            wrapping: wrapping };
 }
 
@@ -351,20 +349,20 @@ var collectingBuiltInContractNames = true;
 var currentCategory = false;
 
 
-function Contract(name, // name: the name of the contract as it should appear in the error messages 
+function Contract(name, // name: the name of the contract as it should appear in the error messages
                   spec) {
   this.contractName = name;
   if (collectingBuiltInContractNames && !__.contains(builtInContractNames, name)) builtInContractNames.push(name);
   __.extend(this, spec || {});
 }
 
-Contract.prototype = { 
+Contract.prototype = {
   signal: "M`okY\\xtXVmQzw5dfjjhkDM|Z9@hGy",
   theDoc: [],
   category: false,
   needsWrapping: false,
   location: false,
-  thingName: false, // thingName: Only used for generating documentation, 
+  thingName: false, // thingName: Only used for generating documentation,
   // and for passing as the `name` argument of `check`.
   isOptional: false,
 
@@ -376,17 +374,17 @@ Contract.prototype = {
 
   firstChecker: function (data) { var self = this; return true; },
   nestedChecker: function (data, next) { var self = this; },
-  wrapper: function (data, next, context) { 
-    var self = this; 
+  wrapper: function (data, next, context) {
+    var self = this;
     throw new ContractLibraryError(wrap, context, "called on a contract that does not implements wrapping")
-      .fullContract(); 
+      .fullContract();
   },
-  check: function (data, /* opt */ name) { 
+  check: function (data, /* opt */ name) {
     var self = this;
     checkWContext(this, data, newContext(name || self.thingName, data, this, false));
     return data;
   },
-  wrap: function (data, name) { 
+  wrap: function (data, name) {
     var self = this;
     var context = newContext(name || self.thingName, data, this, true);
     return checkWrapWContext(this, data, context);
@@ -394,20 +392,20 @@ Contract.prototype = {
   toString: function () { var self = this; return "c." + self.contractName + '(' + self.subToString().join(", ") + ')'; },
   subToString: function () { var self = this; return []; },
   rename: function (name) {
-    var self = this; 
+    var self = this;
     if (collectingBuiltInContractNames && !__.contains(builtInContractNames, name)) builtInContractNames.push(name);
-    return gentleUpdate(this, { contractName: name, toString: function(){return "c."+name;} }); 
+    return gentleUpdate(this, { contractName: name, toString: function(){return "c."+name;} });
   },
-  
-  optional: function () { 
-    var self = this; 
+
+  optional: function () {
+    var self = this;
     var oldToString = self.toString;
     return gentleUpdate(this, { isOptional: true,
                                 toString: function () { var self = this; return 'c.optional(' + oldToString.call(self) + ')'; }
-                              }); 
+                              });
   },
 
-  doc: function (/*...*/) { 
+  doc: function (/*...*/) {
     var self = this;
     return gentleUpdate(this, { theDoc: __.toArray(arguments), category: currentCategory }); }
 };
@@ -419,8 +417,6 @@ exports.Contract = Contract;
 //
 // Elementary contract functions
 //
-
-var pred, value, array, object;
 
 function toContract (v) {
   if (v && v.signal === Contract.prototype.signal) {
@@ -463,7 +459,7 @@ var nothing = pred(function (data) { return false; }).rename('nothing');
 exports.nothing = nothing;
 
 /*
-function not(c) { return 
+function not(c) { return
 
 */
 var falsy = pred(function (data) { return !data; }).rename('falsy');
@@ -473,7 +469,7 @@ var truthy = pred(function (data) { return !!data; }).rename('truthy');
 exports.truthy = truthy;
 
 function oneOf(/*...*/) {
-  return new Contract('oneOf('+__.toArray(arguments).join(', ')+')', 
+  return new Contract('oneOf('+__.toArray(arguments).join(', ')+')',
                       { firstChecker: function (vv) { var self = this; return __.contains(self.values, vv); },
                         values: __.toArray(arguments),
                         toString: function () { var self = this; return 'c.'+self.contractName; }});
@@ -490,7 +486,7 @@ exports.string = string;
 var number = pred(__.isNumber).rename('number');
 exports.number = number;
 
-var integer = 
+var integer =
   pred(function (v) { return Math.floor(v) === v; })
   .rename('integer');
 exports.integer = integer;
@@ -509,12 +505,10 @@ var isA = function(parent, name) {
 };
 exports.isA = isA;
 
-var contract = pred(function (v) { 
-  return (v && v.signal === Contract.prototype.signal) || __.isArray(v) || !__.isObject(v); 
+var contract = pred(function (v) {
+  return (v && v.signal === Contract.prototype.signal) || __.isArray(v) || !__.isObject(v);
 }).rename('contract');
 exports.contract = contract;
-
-var fromExample;
 
 var quacksLike = function(parent, name) {
   return fromExample(parent).rename('quacksLike('+(name||"...")+')');
@@ -539,8 +533,8 @@ function makeAnd(silent) {
     var self = new Contract('and');
     self.contracts = __.toArray(arguments);
     self.nestedChecker = function (data, next) { var self = this; checkMany(silent, self.contracts, data, next); };
-    self.wrapper = function (data, next, context) { 
-      var self = this; 
+    self.wrapper = function (data, next, context) {
+      var self = this;
       throw new ContractLibraryError('wrap', context, "Cannot wrap an `and` contract").fullContract();
     };
     self.needsWrappingIfAny(self.contracts);
@@ -563,14 +557,14 @@ function or (/* ... */) {
   var self = new Contract('or');
   self.contracts = __.filter(arguments, function (c) { var self = this; return !c.needsWrapping; });
   self.wrappingContracts = __.difference(arguments, self.contracts);
-  
+
   if (__.size(self.wrappingContracts) > 1)
-    throw new ContractLibraryError('or', false, 
-                                   "Or-contracts can only take at most one wrapping contracts, got " + 
+    throw new ContractLibraryError('or', false,
+                                   "Or-contracts can only take at most one wrapping contracts, got " +
                                    self.wrappingContracts);
 
   self.nestedChecker = function (data, next, context) {
-    var self = this; 
+    var self = this;
     var allContracts = __.union(self.contracts, self.wrappingContracts);
     var exceptions = [];
 
@@ -588,7 +582,7 @@ function or (/* ... */) {
     context.fail = oldFail;
 
     if (!success) {
-      var msg = 
+      var msg =
         "none of the contracts passed:\n" +
         __(allContracts).map(function(c) {return " - " + c.toString();}).join("\n") +
         "\n\nThe failures were:\n" +
@@ -600,7 +594,7 @@ function or (/* ... */) {
     return success; // return the successful contract to self.wrapper
   };
   self.wrapper = function (data, next, context) {
-    var self = this; 
+    var self = this;
     var c = self.nestedChecker(data, function () { }, context); // this is a bit of a hack.
     return next(c, data, stackContextItems.or);
   };
@@ -613,7 +607,7 @@ exports.or = or;
 function cyclic(/*opt*/ needsWrapping) {
   var self = new Contract('cyclic');
   self.needsWrapping = (__.isUndefined(needsWrapping) ? true : false);
-  self.closeCycle = function (c) { 
+  self.closeCycle = function (c) {
     var self = this;
     if (self.needsWrapping !== c.needsWrapping)
       throw new ContractLibraryError(self.contractName, false, "A " + self.contractName + "() was started with needsWrapping="+self.needsWrapping+
@@ -628,7 +622,7 @@ function cyclic(/*opt*/ needsWrapping) {
 }
 exports.cyclic = cyclic;
 
-function forwardRef(/*opt*/ needsWrapping) { 
+function forwardRef(/*opt*/ needsWrapping) {
   var result = cyclic(__.isUndefined(needsWrapping) ? false : true).rename('forwardRef');
   result.setRef = result.closeCycle;
   delete result.closeCycle;
@@ -646,14 +640,14 @@ function array(itemContract) {
   var self = new Contract('array');
   self.itemContract = itemContract;
   self.firstChecker = __.isArray;
-  self.nestedChecker = function (data, next) { 
-    var self = this; 
+  self.nestedChecker = function (data, next) {
+    var self = this;
     __.each(data, function (item, i) {
       next(self.itemContract, item, stackContextItems.arrayItem(i));
     });
   };
   self.wrapper = function (data, next) {
-    var self = this; 
+    var self = this;
     var result =  __.map(data, function (item, i) {
       return next(self.itemContract, item, stackContextItems.arrayItem(i));
     });
@@ -670,7 +664,7 @@ function tuple(/* ... */) {
   self.contracts = __.toArray(arguments);
   self.firstChecker = __.isArray;
   self.nestedChecker = function (data, next, context) {
-    var self = this; 
+    var self = this;
     if (__.size(data) < __.size(self.contracts)) {
       context.fail(new ContractError(context).expected("tuple of size " + __.size(self.contracts), data));
     }
@@ -681,7 +675,7 @@ function tuple(/* ... */) {
 
   };
   self.wrapper = function (data, next) {
-    var self = this; 
+    var self = this;
     return __.map(__.zip(self.contracts, data.slice(0, __.size(self.contracts))),
                   function (pair, i) {
                     return next(pair[0], pair[1], stackContextItems.tupleItem(i));
@@ -691,7 +685,7 @@ function tuple(/* ... */) {
   self.strict = function () {
     var self = this;
     var oldNestedChecker = self.nestedChecker;
-    var result = gentleUpdate(self, { 
+    var result = gentleUpdate(self, {
       nestedChecker: function (data, next, context) {
         var self = this;
         if (__.size(data) !== __.size(self.contracts)) {
@@ -719,8 +713,8 @@ function hash(valueContract) {
   self.valueContract = valueContract;
   self.firstChecker = __.isObject;
   self.nestedChecker = function (data, next, context) {
-    var self = this; 
-    __.each(data, function (v, k) { 
+    var self = this;
+    __.each(data, function (v, k) {
       next(self.valueContract, v, stackContextItems.hashItem(k));
     });
   };
@@ -759,13 +753,13 @@ function object(/*opt*/ fieldContracts) {
     var result = clone(data);
 
     __(self.fieldContracts).each(function (contract, field) {
-      if (__.has(data, field)) result[field] = next(gentleUpdate(contract, { thingName: field }), 
-                                                    data[field], 
+      if (__.has(data, field)) result[field] = next(gentleUpdate(contract, { thingName: field }),
+                                                    data[field],
                                                     stackContextItems.objectField(field));
     });
-    var extra = __.difference(__.keys(data), __.keys(self.fieldContracts)); 
+    var extra = __.difference(__.keys(data), __.keys(self.fieldContracts));
     __(extra).each(function(f) { result[f] = data[f]; });
-    
+
     return result;
   };
 
@@ -786,8 +780,8 @@ function object(/*opt*/ fieldContracts) {
           var extraStr = __.map(extra, function(k) { return '`'+k+'`'; }).join(', ');
 
           context.fail(new ContractError
-                       (context, 
-                        "Found the extra field" + (__.size(extra) === 1 ? " " : "s ") + extraStr + " in " + 
+                       (context,
+                        "Found the extra field" + (__.size(extra) === 1 ? " " : "s ") + extraStr + " in " +
                         stringify(data) + "\n")
                        .fullContractAndValue());
         }
@@ -830,19 +824,19 @@ function checkOptionalArgumentCount(argumentContracts, extraArgumentContract, ac
   var nRequired = __.size(argumentContracts) - nOptional;
 
   if (nOptional === 0 && !extraArgumentContract) {
-    
+
     if (actuals.length !== nRequired) {
       context.fail(new ContractError
                    (context, "Wrong number of arguments, expected " + nRequired + " but got " + actuals.length)
                    .fullContract());
     }
-    
+
   } else if (actuals.length < nRequired) {
     context.fail(new ContractError
                  (context, "Too few arguments, expected at least " + nRequired + " but got " + actuals.length)
                  .fullContract());
 
-  } else if (!extraArgumentContract && 
+  } else if (!extraArgumentContract &&
              actuals.length > nRequired + nOptional) {
     context.fail(new ContractError
                  (context, "Too many arguments, expected at most " + (nRequired + nOptional) + " but got " + actuals.length)
@@ -882,12 +876,12 @@ function fnHelper(who, argumentContracts) {
       };
 
       var wrappedThis = next(self.thisContract, this, stackContextItems.this, true);
-      var wrappedArgs = 
+      var wrappedArgs =
         __.map(__.zip(self.argumentContracts, __.toArray(arguments).slice(0, self.argumentContracts.length)), function(pair, i) {
           return next(pair[0], pair[1], stackContextItems.argument(pair[0].thingName ? pair[0].thingName : i), true);
         });
       var extraArgs = (!self.extraArgumentContract ? [] :
-                       next(self.extraArgumentContract, __.toArray(arguments).slice(self.argumentContracts.length), 
+                       next(self.extraArgumentContract, __.toArray(arguments).slice(self.argumentContracts.length),
                             stackContextItems.extraArguments, true));
 
       var result = fn.apply(wrappedThis, wrappedArgs.concat(extraArgs));
@@ -897,18 +891,18 @@ function fnHelper(who, argumentContracts) {
 
 
   };
-  self.extraArgs = function(c) { 
+  self.extraArgs = function(c) {
     c = c || exports.any;
-    var self = this; return gentleUpdate(self, { extraArgumentContract: c }); 
+    var self = this; return gentleUpdate(self, { extraArgumentContract: c });
   };
   self.needsWrapping = true;
   self.ths = function (c) { var self = this; return gentleUpdate(self, { thisContract: c }); };
   self.returns = function (c) { var self = this; return gentleUpdate(self, { resultContract: c}); };
-  self.toString = function () { 
-    var self = this; 
+  self.toString = function () {
+    var self = this;
     return "c." + self.contractName + "(" +
       (self.thisContract !== any ? "this: " + self.thisContract + ", " : "") +
-      self.argumentContracts.join(", ") + 
+      self.argumentContracts.join(", ") +
       (self.extraArgumentContract ? "..." + self.extraArgumentContract : "") +
       " -> " + self.resultContract + ")";
   };
@@ -924,7 +918,7 @@ exports.fn = fn;
 function funHelper(who, argumentContracts) {
 
   __.each(argumentContracts, function (argSpec, i) {
-    if (!__.isObject(argSpec)) 
+    if (!__.isObject(argSpec))
       throw new ContractLibraryError
     (who, false,
      "expected an object with exactly one field to specify the name of the " +ith(i)+
@@ -932,25 +926,25 @@ function funHelper(who, argumentContracts) {
 
     if (argSpec instanceof Contract)
       throw new ContractLibraryError
-    (who, false, 
+    (who, false,
      "expected a one-field object specifying the name and the contract of the "+ith(i)+
      " argument, but got a contract " + argSpec);
-      
+
     var s = __.size(__.keys(argSpec));
-    if (s !== 1) 
+    if (s !== 1)
       throw new ContractLibraryError(who, false, "expected exactly one key to specify the name of the "+ith(i)+
                                      " arguments, but got " + stringify(s));
-    
+
   });
   var contracts = __.map(argumentContracts, function(singleton) {
     var name = __.keys(singleton)[0];
     var contract = toContract(singleton[name]);
-    
+
     return gentleUpdate(contract, { thingName: name });
   });
 
-  var toString = function () { 
-    var self = this; 
+  var toString = function () {
+    var self = this;
 
     var argumentStrings =
       __.map(contracts, function (c) {
@@ -964,7 +958,7 @@ function funHelper(who, argumentContracts) {
       " -> " + self.resultContract + ")";
   };
 
-  return gentleUpdate(fnHelper('fun', contracts), { contractName: 'fun', 
+  return gentleUpdate(fnHelper('fun', contracts), { contractName: 'fun',
                                                     toString: toString
                                                   });
 
@@ -995,7 +989,7 @@ function fromExample(v, withQuestionMark) {
 
   } else if (__.isObject(v)) {
     var result = {};
-    __.each(v, function(vv, k) { 
+    __.each(v, function(vv, k) {
       var c = fromExample(vv);
       if (withQuestionMark && /^\?/.test(k)) {
       } else {
@@ -1006,7 +1000,7 @@ function fromExample(v, withQuestionMark) {
 
   } else if (__.isString(v)) {
     return string;
-    
+
   } else if (__.isNumber(v)) {
     return number;
 
@@ -1033,7 +1027,7 @@ exports.documentationTable = documentationTable;
 function ensureDocumentationTable(moduleName) {
   moduleName = (__.isUndefined(moduleName) ? false : moduleName);
 
-  if (!documentationTable[moduleName]) 
+  if (!documentationTable[moduleName])
     documentationTable[moduleName] = { doc: [], categories: [], types: {}, values: {}};
 
   return moduleName;
@@ -1044,7 +1038,7 @@ function documentModule(moduleName /* ... */) {
 
   documentationTable[moduleName].doc =
     documentationTable[moduleName].doc.concat(__.toArray(arguments).slice(1));
-} 
+}
 exports.documentModule = documentModule;
 
 function documentCategory(moduleName, category /*...*/) {
@@ -1061,7 +1055,7 @@ function documentType(moduleName, contract) {
 
   moduleName = ensureDocumentationTable(moduleName);
 
-  if (documentationTable[moduleName].types[contract.contractName]) 
+  if (documentationTable[moduleName].types[contract.contractName])
     throw new ContractLibraryError('`documentType` called with a contract whose name that is already documented: ' + contract);
 
   documentationTable[moduleName].types[contract.contractName] = contract;
