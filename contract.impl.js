@@ -422,7 +422,7 @@ exports.Contract = Contract;
 
 var pred, value, array, object;
 
-toContract = function toContract (v) {
+function toContract (v) {
   if (v && v.signal === Contract.prototype.signal) {
     return v;
   }
@@ -456,7 +456,7 @@ exports.optional = optional;
 var any = new Contract('any');
 exports.any = any;
 
-pred = function pred(fn) { return new Contract('unamed-pred', { firstChecker: fn }); }
+function pred(fn) { return new Contract('unamed-pred', { firstChecker: fn }); }
 exports.pred = pred;
 
 var nothing = pred(function (data) { return false; }).rename('nothing');
@@ -480,7 +480,7 @@ function oneOf(/*...*/) {
 }
 exports.oneOf = oneOf;
 
-value = function value(v) { return oneOf(v).rename('value('+v+')'); }
+function value(v) { return oneOf(v).rename('value('+v+')'); }
 exports.value = value;
 
 
@@ -642,7 +642,7 @@ exports.forwardRef = forwardRef;
 // Data structure contracts
 //
 
-array = function array(itemContract) {
+function array(itemContract) {
   var self = new Contract('array');
   self.itemContract = itemContract;
   self.firstChecker = __.isArray;
@@ -738,7 +738,7 @@ function hash(valueContract) {
 }
 exports.hash = hash;
 
-object = function object(/*opt*/ fieldContracts) {
+function object(/*opt*/ fieldContracts) {
   var self = new Contract('object');
   self.fieldContracts = {};
   __.each(fieldContracts, function(c, k) { self.fieldContracts[k] = toContract(c) });
@@ -989,7 +989,7 @@ exports.method = method;
 // Relevant utility functions
 //
 
-fromExample = function fromExample(v, withQuestionMark) {
+function fromExample(v, withQuestionMark) {
   if (__.isArray(v)) {
     return array(fromExample(v[0]));
 
