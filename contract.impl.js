@@ -497,6 +497,9 @@ exports.bool = bool;
 var regexp = pred(__.isRegExp).rename('regexp');
 exports.regexp = regexp;
 
+var date = pred(__.isDate).rename('Date');
+exports.date = date;
+
 var anyFunction = pred(__.isFunction).rename('fun(...)');
 exports.anyFunction = anyFunction;
 

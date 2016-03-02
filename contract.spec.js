@@ -17,7 +17,7 @@ Array.prototype.toString = function () {
 };
 
 var oldToString = Object.prototype.toString;
-Object.prototype.toString = function () { 
+Object.prototype.toString = function () {
   var that = this;
   if (__.isObject(that))
     return "{ " + __.chain(that).keys().map(function (k) { return k+": " + that[k];}).value().join(", ") + " }";
@@ -38,7 +38,7 @@ should.Assertion.prototype.throwContract = function (message) {
 
 should.Assertion.prototype.throwType = function(type, message){
   var fn = this.obj, err = {} , errorInfo = '' , caught, ok;
-  
+
   try {
     var v = fn();
     caught = false;
@@ -48,7 +48,7 @@ should.Assertion.prototype.throwType = function(type, message){
     err = e;
     caught = true;
   }
-  
+
   if (caught) {
     console.log('\ncontracts/contract.spec.js Line 49:\n'+err+'\n'+err.renderedStack+'\n\n');
     if (err.name !== type.name) {
@@ -70,7 +70,7 @@ should.Assertion.prototype.throwType = function(type, message){
     ok,
     'expected a ' + type.name + ' to be thrown ' + errorInfo,
     'expected no ' + type.name + ' to be thrown, got "' + err.message + '"');
-  
+
   return this;
 };
 
@@ -81,7 +81,7 @@ describe ("toContract", function () {
   it ("wraps values", function () { c.toContract(5).contractName.should.be.eql(c.value(5).contractName); });
 });
 
-describe ("any", function () { 
+describe ("any", function () {
   it ("pass 5", function () { c.any.check(5).should.eql(5); });
 });
 
@@ -98,6 +98,11 @@ describe ("value", function () {
 describe ("string", function () {
   it ("pass string", function () { c.string.check("asd").should.eql("asd"); });
   it ("reject different", function () { (function () { c.string.check(6); }).should.throwContract(); });
+});
+
+describe ("Date", function () {
+  it ("pass Date", function () { c.date.check(new Date()).should.ok; });
+  it ("reject different", function () { (function () { c.date.check(6); }).should.throwContract(); });
 });
 
 describe("pred", function () {
@@ -159,8 +164,8 @@ describe ("hash", function () {
 });
 
 describe ("object regression", function () {
-  it ("one wrapping field and one non-wrapping field", 
-      function () { 
+  it ("one wrapping field and one non-wrapping field",
+      function () {
         c.object({x: c.string, fn: c.fn()}).wrap({x:"foo", fn: function () {}}).x.should.eql('foo'); });
 });
 
@@ -228,7 +233,7 @@ describe ("fn", function () {
   var twoId = function(x, y) { return [x, y]; };
   var manyId = function (/* ... */ ) { return arguments[0]; };
   var thisId = function (x) { return this.x; };
-  
+
 
   var idC = c.fn(c.number).returns(c.number);
   var strIdC = c.fn(c.number).returns(c.string);
@@ -244,8 +249,8 @@ describe ("fn", function () {
   it ("passes twoId(number, string)", function () { twoIdC.wrap(twoId)(5, "x")
                                                     .should.eql([5, "x"]); });
   it ("passes manyId(num, num, str)", function () { manyIdC.wrap(manyId)(5, 7, 10).should.eql(5); });
-  
-  
+
+
   it ("fails on non-function", function () { (function () { idC.wrap(5); }).should.throwContract(); });
   it ("fails on wrong number of args", function () { (function () { idC.wrap(id)(5, 6); }).should.throwContract(); });
   it ("fails on input", function () { (function () { idC.wrap(id)("boo"); }).should.throwContract(); });
@@ -264,7 +269,7 @@ describe ("fn", function () {
   it ("passes with extra", function () { oneOptC.extraArgs(c.any).wrap(twoId)(10, 20, 30).should.eql([10, 20]); });
   it ("fails too few", function () { (function () { oneOptC.wrap(twoId)(); }).should.throwContract(/few/); });
   it ("fails too many", function () { (function () { oneOptC.wrap(twoId)(10, 20, 30); }).should.throwContract(/many/); });
-      
+
 });
 
 
@@ -288,8 +293,8 @@ describe ("fun", function () {
   it ("passes twoId(number, string)", function () { twoIdC.wrap(twoId)(5, "x")
                                                     .should.eql([5, "x"]); });
   it ("passes manyId(num, num, str)", function () { manyIdC.wrap(manyId)(5, 7, 10).should.eql(5); });
-  
-  
+
+
   it ("fails on non-function", function () { (function () { idC.wrap(5); }).should.throwContract(/fun/); });
   it ("fails on wrong number of args", function () { (function () { idC.wrap(id)(5, 6); }).should.throwContract(/Wrong number/); });
   it ("fails on input", function () { (function () { idC.wrap(id)("boo"); }).should.throwContract(/the_arg/); });
@@ -303,4 +308,3 @@ describe ("fun", function () {
   it ("fails on this", function () {(function () { var v = {x:50, getX: thisC.wrap(thisId) };
                                                    v.getX(5); }).should.throwContract(/this/); });
 });
-

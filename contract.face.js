@@ -8,7 +8,7 @@
 /*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef: true, newcap: true undef: true, strict: true */
 /*global exports, require */
 
-var __ = require('underscore'); // '__' because node's repl already binds '_' 
+var __ = require('underscore'); // '__' because node's repl already binds '_'
 var c = require('./contract.impl');
 
 var thisModuleName = 'Contracts';
@@ -33,7 +33,7 @@ c.documentModule(thisModuleName,
     "      push: function (...) { ... }",
     "    }",
     "    ",
-    "    module.exports = c.publish(implementation, contracts);", 
+    "    module.exports = c.publish(implementation, contracts);",
     "",
     "In general, contracts are any values that can be promoted to a",
     "`contractObject` by `toContract`. However, `contractObject` have additional useful",
@@ -50,23 +50,23 @@ contractObject.closeCycle
 (c.object({
   check: c.method(contractObject, { value: c.any }, { name: c.optional(c.string) }).returns(c.any)
     .doc("See: `check`"),
-  
+
   wrap: c.method(contractObject, { value: c.any }, { name: c.optional(c.string) }).returns(c.any)
     .doc("See: `wrap`"),
-  
+
   rename: c.method(contractObject, { name: c.string }).returns(contractObject)
     .doc("Returns `this` with the name `name`. The new name will be used by `toString`",
          "and in error messages."),
-  
+
   optional: c.method(contractObject).returns(contractObject)
     .doc("See: `optional`"),
-  
+
   doc: c.method(contractObject).extraArgs([c.string]).returns(contractObject)
     .doc("Returns `this` with zero or more strings set as the `theDoc` array.",
          "",
          "This is useful to document the function or argument `this` contract is",
          "being attached to with `publish` "),
-  
+
   theDoc: c.array(c.string)
     .doc("An array of strings which will be used by `publish` to document the",
          "values being published.")
@@ -100,7 +100,7 @@ objectContractObject.closeCycle
  .extend(strictExtension)
  .rename('objectContractObject')
  .doc("Contracts on objects have two extra method, `extend` and `strict`"));
-                                
+
 c.documentType(thisModuleName, objectContractObject);
 
 
@@ -134,17 +134,17 @@ var contextContract = c.object({ thingName: c.string,
 
 var contracts = {
   check: c.fun({contract: c.contract}, {data: c.any}, { name: c.optional(c.string) })
-    .doc("Verifies that `data` satisfies `contract`, if it doesn't, throws a `ContractError`,", 
+    .doc("Verifies that `data` satisfies `contract`, if it doesn't, throws a `ContractError`,",
          "otherwise it returns `data` unchanged.",
          "`check` throws an error if `contract` contains a function contract or any other contract",
          "that cannot be wrapped."),
-  
+
   wrap: c.fun({contract: c.contract}, {data: c.any}, { name: c.optional(c.string) })
     .doc("Like `check`, verifies that `data` satisfies `contract`, if it doesn't, throws a `ContractError`.",
          "If `data` does not contains any function contracts (nor any custom contract types that require wrapping),",
          "`wrap` returns `data` unchanged. Otherwise, it returns `data` wrapped with the machinery",
          "necessary for further contract checking."),
-  
+
   optional: c.fun({contract: c.contract}).returns(contractObject)
     .doc("Returns an optional version of `contract`. It will accept all falsy values in",
          "addition to all the values accepted by `this`. ",
@@ -157,86 +157,89 @@ var contracts = {
          "their right.",
          "",
          "See also: `contractObject.optional`"),
-  
+
   any: c.contract
     .doc("Accepts any value."),
-  
+
   pred: c.fun({pred: c.fn(c.any).returns(c.any)}).returns(contractObject)
     .doc("Given a function `pred`, accepts all values for which `pred` returns truthy."),
-  
+
   nothing: c.contract
     .doc("Rejects all values."),
-  
+
   falsy: c.contract
     .doc("Accepts only `false`, `null`, `undefined`, the empty string, the",
          "number 0, and the value NaN."),
-  
+
   truthy: c.contract
     .doc("Accepts all values except `false`, `null`, `undefined`, the empty string, the",
          "number 0, and the value NaN."),
-  
+
   value: c.fn(c.any).returns(contractObject)
     .doc("Returns a contract that accepts only the given value."),
-  
+
   oneOf: c.fn().extraArgs().returns(contractObject)
     .doc("Return a contract that accepts any on of the given values."),
 
   string: c.contract
     .doc("Accepts strings."),
-  
+
   number: c.contract
     .doc("Accepts numbers"),
-  
+
   integer: c.contract
     .doc("Accepts integers"),
-  
+
   bool: c.contract
     .doc("Accepts only the values `true` and `false`."),
-  
+
   regexp: c.contract
-    .doc("Accept regexps"),
-  
+    .doc("Accepts regexps"),
+
+  date: c.contract
+    .doc("Accepts `Date`"),
+
   anyFunction: c.contract
     .doc("Accepts any function. To put contract on the argument and return",
          "value, use `fn`, `fun`, or `method`."),
-  
+
   isA: c.fun({parent: c.any}, {name: c.string}).returns(contractObject)
     .doc("Accepts only values `v` for which `v instanceof parent` returns",
          "true. `name` is used to describe the contract by `toString` and in error messages."),
-  
+
   contract: c.contract
     .doc("Accept contract object and any values which can be promoted to a",
          "contract object by `toContract`."),
-  
+
   toContract: c.fn(c.any).returns(contractObject)
     .doc("Promote the given value to a contract object. Arrays are promoted to an",
          "`array` contract. The array needs to have exactly one element specifying the",
          "contract on the items. Objects are promoted to an `object` contract. Functions",
          "are promoted to a `pred` contract. All other values (except undefined) are prototed to a",
          "`value` contract. The given value is promoted to a contract recursively."),
-  
+
   quacksLike: c.fun({parent: c.any}, {name: c.string}).returns(contractObject)
     .doc("Accepts any object which has at least the same fields as `parent`, with the same",
          "types, as determined by `fromExample`. `name` is used to describe the",
          "contract by `toString` and in error messages."),
-  
+
   and: c.fun().extraArgs([c.contract]).returns(contractObject)
     .doc("Accepts value which passes all the given contracts."),
-  
+
   silentAnd: c.fun().extraArgs([c.contract]).returns(contractObject)
     .doc("Like `and`, but does not mention the presence of the `and` contract in",
          "the error messages."),
-  
+
   matches: c.fn(c.regexp).returns(contractObject)
     .doc("Accepts strings which match the given regexp."),
-  
+
   or: c.fun().extraArgs([c.contract]).returns(contractObject)
     .doc("Accepts values which passes at least one of the given contracts.",
          "`or` accepts at most one wrapping contract. `or` will test each of the",
          "contracts in the order they were given, except for the wrapping",
          "contract, which will be tested last. If the wrapping contract is the",
          "only contract that passes, the `or` contract will wrap its value."),
-  
+
   cyclic: c.fun({needsWrapping: c.optional(c.bool)}).returns(contractObject)
     .doc("Returns an empty placeholder contract which can later be populated with .closeCycle(c).",
          "",
@@ -303,7 +306,7 @@ var contracts = {
     .doc("Accepts functions that accepts as many arguments as the number of",
          "contracts given in addition to the `ths` contract, so long as the argument",
          "passes the corresponding contract.",
-         "", 
+         "",
          "Calls only passes if the `this` implicit argument passes the `ths` contract.",
          "",
          "Each non-this arguments is specified with a one-field object. The name of the field",
@@ -313,12 +316,12 @@ var contracts = {
 
   /*
   ContractError: c.fun({ context: contextContract }, { message: c.string })
-    .returns(c.object({ name: c.string, 
+    .returns(c.object({ name: c.string,
                         context: contextContract,
                         message: c.string,
                         expected: c.optional(c.any) }))
     .doc("The errors thrown by the contract library"),
-    */                        
+    */
 
   setErrorMessageInspectionDepth: c.fun({ depth : c.integer })
     .doc("Set a depth to pass to `util.inspect()` to limit the size of the data presented in",
@@ -326,7 +329,7 @@ var contracts = {
 
   //--
   //
-  // Functionality to write documentation 
+  // Functionality to write documentation
   //
 
   fromExample: c.fun({value: c.any}, { withQuestionMark: c.optional(c.bool) }).returns(contractObject)
@@ -363,7 +366,7 @@ var contracts = {
          "for `contract.contractName` in `moduleName`. The given contract should have a been given",
          "a unique name, otherwise `documentType` throws an exception."),
 
-  publish: c.fun({ moduleName: c.string }, {self: c.any}, {contracts: c.hash(c.contract)}, 
+  publish: c.fun({ moduleName: c.string }, {self: c.any}, {contracts: c.hash(c.contract)},
                  { additionalExports: c.optional(c.object()) }
                 )
     .doc("Returns an object like `self` where each element is wrapped using the",
@@ -380,7 +383,7 @@ var contracts = {
          "If `additionalExports` is provided, the keys in the given object",
          "are copied to the return value."),
 
-  documentationTable: c.hash(c.object({ doc: c.array(c.string), 
+  documentationTable: c.hash(c.object({ doc: c.array(c.string),
                                         categories: c.array(c.object({name: c.string, doc: c.array(c.string)})),
                                         types: c.hash(contractObject),
                                         values: c.hash(contractObject) }))
@@ -391,10 +394,10 @@ var contracts = {
   // ---
 
   privates: c.any // private variables, to grant access to the test module
-  
+
 };
 
-module.exports = c.publish(thisModuleName, c, contracts, 
+module.exports = c.publish(thisModuleName, c, contracts,
                            {
                              functionContract: functionContract,
                              contractObject: contractObject,
