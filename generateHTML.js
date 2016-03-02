@@ -7,7 +7,7 @@ var __ = require('underscore');
 var fs = require('fs');
 var m = require("mustache");
 var c = require('./contract.face');
-var s = require('github-flavored-markdown');
+var marked = require('marked');
 
 var moduleTemplateData = {
   name: 'contract',
@@ -17,9 +17,9 @@ var moduleTemplateData = {
   categories: [
 
     { hasHeader: true,
-      name: 'basic', 
+      name: 'basic',
       doc: 'the basic stuff',
-      
+
       hasTypes: true,
       hasValues: true,
 
@@ -27,19 +27,19 @@ var moduleTemplateData = {
         { name: 'contractObject', doc: 'contract are represented with object.', type: 'c.object' },
         { name: 'objectContractObject', doc: 'object contract have extra values.', type: 'c.object'  }
       ],
-      
+
       values: [
         { name: 'c.string', type: 'contractObject', doc: 'the string type' },
         { name: 'c.any', type: 'contractObject', doc: 'accepts any value' }
       ]},
 
     { hasHeader: true,
-      name: 'wrappers', 
+      name: 'wrappers',
       doc: 'the stuff that needs wrapping',
 
       hasTypes: false,
       hasValues: true,
-      
+
       values: [
         { name: 'c.tuple', type: 'contractObject', doc: 'the string type' },
         { name: 'c.any', type: 'contractObject', doc: 'accepts any value' }
@@ -48,10 +48,8 @@ var moduleTemplateData = {
 };
 
 
-var showdown = new s.converter();
-
 function renderDoc(strings) {
-  return showdown.makeHtml(strings.join("\n"));
+  return marked(strings.join("\n"));
 
 
 }
@@ -84,7 +82,7 @@ function renderCategories(mod) {
   function filterForCat(list, cat) {
     var result = {};
     __.each(list, function(v, n) {
-      if (v.category === cat) 
+      if (v.category === cat)
         result[n] = v;
     });
     return result;
@@ -99,14 +97,14 @@ function renderCategories(mod) {
   }
 
   var result = __.map(mod.categories, function(cat) {
-    
+
     var result = {
       hasHeader: true,
       name: c.name,
       doc: renderDoc(c.doc)
     };
-    addTypesValues(result, 
-                   filterForCat(mod.types, cat.name), 
+    addTypesValues(result,
+                   filterForCat(mod.types, cat.name),
                    filterForCat(mod.values, cat.name));
 
     return result;
@@ -125,7 +123,7 @@ function renderCategories(mod) {
 
 function renderModule(name) {
   var mod = c.documentationTable[name];
-  
+
   return {
     name: name,
     doc: renderDoc(mod.doc),
@@ -140,15 +138,14 @@ function generateHTML() {
       process.exit(1);
     }
     console.log(renderModule('Contracts'));
-    var html = m.to_html(template, 
+    var html = m.to_html(template,
                          //moduleTemplateData
                          renderModule('Contracts')
                         );
     console.log(html);
-    fs.writeFileSync("output.html", html, "ascii");        
+    fs.writeFileSync("output.html", html, "ascii");
   });
-  
+
 }
 
 generateHTML();
-
