@@ -33,7 +33,7 @@ usually get from static types, namely:
 Among the dynamic languages, JavaScript is suffering from the absence of static
 types quite, because of it propensity for implicitly converting everything
 into everything else, and its habit turning anything into a `null` at a moment's
-notice. When I couldn't stand it anymore, I wrote this contract library. 
+notice. When I couldn't stand it anymore, I wrote this contract library.
 
 
 ### Run-time vs Compile-time
@@ -57,22 +57,24 @@ everywhere `fn` is called -- that's not great. Higher-order contracts make it
 possible to place the specification next to the definition of `derive`, where it
 belongs, like this:
 
-    var c = require('rho-contracts')
+```javascript
+var c = require('rho-contracts')
 
-    // derive: returns a function that is the numerically-computed derivative
-    //         of the given function.
-    var derive =
+// derive: returns a function that is the numerically-computed derivative
+//         of the given function.
+var derive =
 
-      /* This is the specification: */ 
-      c.fun( { fn:     c.fun( { x: c.number } ).returns(c.number) },
-             { deltaX: c.number                                   } )
-       .wrap(
-             /* And the implementation goes here: */ 
-             function(fn, deltaX) { 
-               return function(x) { 
-                return (fn(x+deltaX/2) - fn(x-deltaX/2))/deltaX
-               }
-             }
+  /* This is the specification: */
+  c.fun( { fn:     c.fun( { x: c.number } ).returns(c.number) },
+         { deltaX: c.number                                   } )
+   .wrap(
+         /* And the implementation goes here: */
+         function(fn, deltaX) {
+           return function(x) {
+            return (fn(x+deltaX/2) - fn(x-deltaX/2))/deltaX
+           }
+         }
+```
 
 In this example, we use `c.fun` to instantiate a contract stating that `derive`
 is a function of two arguments. The first argument, which is named `fn`, must be a
@@ -85,10 +87,10 @@ own `function` keyword. The newly created anonymous function is then immediately
 wrapped with a contract-checking shell, using `rho-contracts.js`' `.wrap()` method on
 contracts. The result of `.wrap()` is a function that:
 
-1. checks that the given arguments passes their contracts (aka, that `fn` 
-   is a function and that `deltaX` is a number), 
-2. calls the original function, then 
-3. checks that the result of calling the function matches the 
+1. checks that the given arguments passes their contracts (aka, that `fn`
+   is a function and that `deltaX` is a number),
+2. calls the original function, then
+3. checks that the result of calling the function matches the
    contract specified in the `.returns()` clause, then
 4. passes the result through to the to the original caller.
 
@@ -99,38 +101,39 @@ execution of the body of `derive`, and all its invocations will be checked
 against the contract.
 
 Given the definition for `derive` above:
+```javascript
+  > function quadratic(x) { return 5*x*x + 3*x + 2 }
 
-      > function quadratic(x) { return 5*x*x + 3*x + 2 }
+  // When `derive` is called correctly, there is no error:
+  > var linear = derive(quadratic, 1.0)
 
-      // When `derive` is called correctly, there is no error:
-      > var linear = derive(quadratic, 1.0)
+  > linear(0)
+  3
+  > linear(1)
+  13
+  > linear(10)
+  103
 
-      > linear(0)
-      3
-      > linear(1)
-      13
-      > linear(10)
-      103
+  // Error: calling with the arguments flipped:
+  > derive(1.0, quadratic)
+  ContractError: Expected fun, but got 1
+  For the `fn` argument of the call.
 
-      // Error: calling with the arguments flipped:
-      > derive(1.0, quadratic)
-      ContractError: Expected fun, but got 1
-      For the `fn` argument of the call.
+  // Error: forgetting an argument:
+  > derive(quadratic)
+  ContractError: Wrong number of arguments, expected 2 but got 1
 
-      // Error: forgetting an argument:
-      > derive(quadratic)
-      ContractError: Wrong number of arguments, expected 2 but got 1
+  // Error: calling with the wrong kind of function:
+  > var fprime = derive(function(x) { return "**" + x + "**" }, 1.0)
 
-      // Error: calling with the wrong kind of function:
-      > var fprime = derive(function(x) { return "**" + x + "**" }, 1.0)
+  // There is now a contract-checking shell installed around `fprime` that
+  // throws an error when `fprime` is called:
+  > fprime(100)
+  ContractError: `fn()` broke its contract
+  Expected number, but got '**100.5**'
+  for the return value of the call.
+```
 
-      // There is now a contract-checking shell installed around `fprime` that
-      // throws an error when `fprime` is called:
-      > fprime(100)
-      ContractError: `fn()` broke its contract
-      Expected number, but got '**100.5**'
-      for the return value of the call.
-      
 Note how these contract errors are triggered much faster than JavaScript's
 native error, they provide clearer error messages, and they highlight the
 exactly line where the error is, rather than some line deep inside the
@@ -160,7 +163,7 @@ functions*](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
 ICFP 2002.  The paper formalizes the notion of blame, describes the
 blame-tracking algorithm necessary to report blame correctly, and proves the
 algorithm correct.
-      
+
 This implementation follows the paper closely, though without Racket's macro
 system it was not possible to implement the report of blame in term of the name
 of the module interacting. `rho-contracts.js` only reports the function names.
@@ -177,34 +180,35 @@ these functions against their specification without higher-order contracts.
 
 For example:
 
-    // Define a contract for position objects with two methods, `moveX` and `moveY`:
-    > var posContract = 
-        c.object({
-                x: c.number,
-                y: c.number,
-                moveX: c.fun({dx: c.number}),
-                moveY: c.fun({dx: c.number})
-                })
+```javascript
+// Define a contract for position objects with two methods, `moveX` and `moveY`:
+> var posContract =
+c.object({
+x: c.number,
+y: c.number,
+moveX: c.fun({dx: c.number}),
+moveY: c.fun({dx: c.number})
+})
 
-    // Define a constructor for position objects. Objects returned 
-    // will have their methods `.wrap()`-ed with contract-checking shells:
-    > var makePos = c.fun({x: c.number}, { y: c.number })
-                   .returns(posContract)
-      .wrap(
-        function(x, y) { 
-          return { x: x, y: y,
-                   moveX: function(dx) { return makePos(this.x + dx, this.y) }
-                   moveY: function(dy) { return makePos(this.x, this.y + dy) }
-                 }
-        })
+// Define a constructor for position objects. Objects returned
+// will have their methods `.wrap()`-ed with contract-checking shells:
+> var makePos = c.fun({x: c.number}, { y: c.number })
+.returns(posContract)
+.wrap(
+function(x, y) {
+return { x: x, y: y,
+moveX: function(dx) { return makePos(this.x + dx, this.y) }
+moveY: function(dy) { return makePos(this.x, this.y + dy) }
+}
+})
 
-    // Try to misuse the object:
-    > makePos(5, 7).moveX("left")
+// Try to misuse the object:
+> makePos(5, 7).moveX("left")
 
-    ContractError: on `moveX()`
-    Expected number, but got 'left'
-    for the `dx` argument of the call.
-
+ContractError: on `moveX()`
+Expected number, but got 'left'
+for the `dx` argument of the call.
+```
 
 ## Tutorial
 
@@ -215,23 +219,27 @@ For example:
 
 The contract library is typically `require`'d and bound to a variable called `c`:
 
-    > var c = require('rho-contracts')
+```javascript
+c = require('rho-contracts')
+```
 
 ### Basic Value Contracts
 
 Some fields of `c` are contract objects you can use directly, such as the
 `c.number` contract:
 
+```javascript
     > c.number.toString()
     'c.number'
     > c.number.check(5)       // everything is fine, no error, returns the given value.
     5
     > c.number.check("five")  // boom, because a string is not a number.
     ContractError: Expected number, but got 'five'
+```
 
 The `ContractError` being thrown is a normal JavaScript `Error`. It can be caught
 and rethrown like normal exceptions.  Other useful basic contracts are
-`c.string`, `c.integer`, `c.bool`, and `c.regexp`. 
+`c.string`, `c.integer`, `c.bool`, and `c.regexp`.
 
 - `c.string` : accepts only strings, according to Underscore.js's `_.isString()`
 - `c.integer` : accepts only numbers `v` that satisfy `Math.floor(v) === v`
@@ -248,34 +256,38 @@ conditional
 - `c.nothing` : the contract that rejects everything
 
 Other fields of `c` are functions that construct interesting
-contracts, such as `c.oneOf()` which returns a contract that only accepts the values enumerated: 
+contracts, such as `c.oneOf()` which returns a contract that only accepts the values enumerated:
 
-    > var anwserContract = c.oneOf("y", "yes", "n", "no")
+```javascript
+> var anwserContract = c.oneOf("y", "yes", "n", "no")
 
-    > anwserContract.toString()
-    'c.oneOf(y, yes, n, no)'
+> anwserContract.toString()
+'c.oneOf(y, yes, n, no)'
 
-    > answerContract.check("yes")   // good, no error
-    'yes'
+> answerContract.check("yes")   // good, no error
+'yes'
 
-    > answerContract.check("bunny")    // boom
-    ContractError: Expected oneOf(y, yes, n, no), but got 'bunny'
+> answerContract.check("bunny")    // boom
+ContractError: Expected oneOf(y, yes, n, no), but got 'bunny'
+```
 
 On particularly powerful contract is `c.or()`, which is a contract that takes
 two or more contracts as argument, and returns a contract that accept a value if
 it passes any one of the given contracts:
 
-    > c.or(c.number, c.string).check(10)        // good
-    10
-    > c.or(c.number, c.string).check("ten")     // good
-    'ten'
-    > c.or(c.number, c.string).check( { x: 10 } )
-    ContractError: none of the contracts passed:
-     - c.number
-     - c.string
-    The failures were:
-    c.number: Expected number, but got { x: 10 }
-    c.string: Expected string, but got { x: 10 }
+```javascript
+> c.or(c.number, c.string).check(10)        // good
+10
+> c.or(c.number, c.string).check("ten")     // good
+'ten'
+> c.or(c.number, c.string).check( { x: 10 } )
+ContractError: none of the contracts passed:
+ - c.number
+ - c.string
+The failures were:
+c.number: Expected number, but got { x: 10 }
+c.string: Expected string, but got { x: 10 }
+```
 
 The `c.or()` contracts makes it possible to specify types for the kind of
 heterogeneous functions that are common in idiomatic JavaScript, but that would
@@ -345,7 +357,7 @@ corresponding contract:
     [ 10, 'ten' ]
 
     > c.tuple(c.number, c.string).check([10, 20])      // boom
-    ContractError: Expected string, but got 20 
+    ContractError: Expected string, but got 20
     for the 2nd element of the tuple.
     The full value being checked was:
     [ 10, 20 ]
@@ -383,7 +395,7 @@ any argument fails to check against its contract:
     ContractError: Wrong number of arguments, expected 1 but got 3
 
     > square("cat")
-    ContractError: 
+    ContractError:
     Expected number, but got 'cat'
     for the `x` argument of the call.
 
@@ -447,7 +459,7 @@ return a new contract which checks everything the original contract checks, plus
 their additional check. They are used like this:
 
     > var triceWord = c.fun({s:c.any}).returns(c.string)
-                        //     ^---- This is a bug, should be `c.string`        
+                        //     ^---- This is a bug, should be `c.string`
                        .wrap(
                           function (s) { return s + s + s })
     > triceWord("bork")
@@ -466,12 +478,12 @@ their additional check. They are used like this:
   described in Chapter 4 of Douglas' Crockford' *JavaScript, The Good Parts*.
 
            > var makeStatus = function(string) { return { status:  string } }
-           
-           > var get_status = 
+
+           > var get_status =
                c.fun().ths(c.object({status: c.string})).returns(c.string)
                 .wrap(
                    function() { return this.status })
-            
+
            > get_status.apply({ status: 'A-OK' }) // OK
            'A-OK'
 
@@ -498,7 +510,7 @@ argument must be optional as well.
           function(i) { if (i) x+=i; else x++; return x })
 
     > incrementIt(10)
-    10 
+    10
     > incrementIt()   // calling with the argument omitted
     11
     > incrementIt(10, 20) // too many arguments!
@@ -506,7 +518,7 @@ argument must be optional as well.
 
 
 
-### Wrapping vs Checking 
+### Wrapping vs Checking
 
 Recall, we cannot tell if a function will be miscalled until it is called, and
 we cannot tell if a function will return a value of the wrong type until it
@@ -515,26 +527,26 @@ targeted function with a contract-checking shell. Concretely, this means it is
 an error to call `.check()` on a function contract:
 
         > c.fun({ n: c.integer }).check(function(n) { return n+1 })
-        ContractLibraryError: check: This contract requires wrapping. 
+        ContractLibraryError: check: This contract requires wrapping.
         Call wrap() instead and retain the wrapped result.
 
 The requirement to call `.wrap()` instead of `.check()` carries over to
 contracts over data structures containing functions:
 
-        > var operations = [function (x) { return x + 1 }, 
+        > var operations = [function (x) { return x + 1 },
                             function (x) { return x * 2 },
                             function (x) { return x * x } ]
 
         // Check whether `operations` is indeed an array of functions from number to number:
         > c.array(c.fun({ x: c.number }).returns(c.number))
            .check(operations)
-        ContractLibraryError: check: This contract requires wrapping. 
+        ContractLibraryError: check: This contract requires wrapping.
         Call wrap() instead and retain the wrapped result.
-        
+
 By replacing `.check()` with `.wrap()`, `rho-contracts.js` will recur down the
 array and wrap each function with the function contract:
 
-        > var operations_wrapped = 
+        > var operations_wrapped =
             c.array(c.fun({ x: c.number }).returns(c.number))
              .wrap(operations)
 
@@ -556,7 +568,7 @@ exception. The error provided clearly identifies the source of the fault:
         The full value being checked was:
         [ [Function], [Function], [Function] ]
 
-  
+
 Meanwhile, the original functions rest unmodified in the original `operations`
 array, and continue to fail silently:
 
@@ -574,19 +586,19 @@ hashes, tuples, and objects.
 Since objects in JavaScript are constructed out of normal hash tables containing
 normal functions, contracts on objects follow the usage described in the previous
 three sections *Data Structure Contracts*, *Contracts on Functions* and *Wrapping
-vs Checking*. 
+vs Checking*.
 
     > String.prototype.repeat = function( num ) {   // A helper function on
                                                        String, just for fun.
         return new Array(num + 1).join(this);
       }
 
-    > c.animal = c.object({ nLegs: c.number, 
+    > c.animal = c.object({ nLegs: c.number,
                             name:  c.string,
                             speak: c.fun({n: c.number}).returns(c.string) })
 
     > var makeCat = c.fun({ name: c.string }).returns(c.animal)
-                    .wrap(function (name) { 
+                    .wrap(function (name) {
                       return {
                         nLegs: 4,
                         name: name,
@@ -595,7 +607,7 @@ vs Checking*.
                     })
 
     > var makeBird = c.fun({ name: c.string }).returns(c.animal)
-                    .wrap(function (name) { 
+                    .wrap(function (name) {
                       return {
                         nLegs: 2,
                         name: name,
@@ -621,9 +633,9 @@ check. In order to distinguish functions intended be used as methods,
 `rho-contracts.js` provides `c.method()`, which is a variant of `c.fun()` that
 takes the contract on `this` as its first argument:
 
-     > c.animal = c.object({ nLegs: c.number, 
+     > c.animal = c.object({ nLegs: c.number,
                              name:  c.string,
-                             speak: c.method(c.animal, { n: c.number}).returns(c.string) }) 
+                             speak: c.method(c.animal, { n: c.number}).returns(c.string) })
                                            // ^--- Ousp, this doesn't actually work.
 
 However, this attempt fails due to the cyclic reference: the line of code
@@ -641,7 +653,7 @@ make it possible to fully specify such contract on objects. The function
 The placeholder returned by `c.cyclic()` has only one useful method:
 `.closeCycle()`, which must be called with the actual contract:
 
-    > c.animal.closeCycle(c.object({ nLegs: c.number, 
+    > c.animal.closeCycle(c.object({ nLegs: c.number,
                                      name:  c.string,
                                      speak: c.method(c.animal, { n: c.number }).returns(c.string) }))
 
@@ -657,7 +669,7 @@ When using this better definition of `c.animal`, the error is caught as it shoul
 
 `rho-contracts.js` provides three additional pieces of functionality made specifically for
 object contracts.
- 
+
 - `c.optional()` : Contracts marked "optional" by the `c.optional()` function (as
   discussed earlier in the *Contracts for Optional Arguments* section) are also
   used to specify optional fields of objects. A field is considered missing if
@@ -666,10 +678,10 @@ object contracts.
 <div>
 
     > c.car = c.object({ carModel: c.string,
-                         trunkSize: c.optional(c.number) }) // missing to indicate a sport car with no trunk  
+                         trunkSize: c.optional(c.number) }) // missing to indicate a sport car with no trunk
 
     > c.car.check({ carModel: "MINI Cooper Coupe",          // OK
-                    trunkSize: 9.8 })  
+                    trunkSize: 9.8 })
 
     > c.car.check({ carModel: "Infiniti IPL G Convertible", // OK
                     trunkSize: null })
@@ -680,13 +692,13 @@ Or:
 
 But not:
 
-    > c.car.check({ trunkSize: 22.1 })  
+    > c.car.check({ trunkSize: 22.1 })
     ContractError: Field `carModel` required, got { trunkSize: 9.8 }
 
 
 - `.strict()` : By default, objects are allowed to have additional fields not
   specified in the contract. Calling `.strict()` returns a contract that
-  disallows them. 
+  disallows them.
 
 <div>
 
@@ -695,7 +707,7 @@ But not:
      > c.car.strict().check({ carModel: "semitruck", towing: true }) // but this is not
      ContractError: Found the extra field `towing` in { carModel: 'semitruck', towing: true }
 
-- `.extend` : 
+- `.extend` :
 
 - .strict on tuples
 
@@ -732,7 +744,7 @@ And also
 
 - `rho-contracts.js` is an implementation of the paper [*Contracts for higher-order
 functions*](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
-ICFP 2002.  
+ICFP 2002.
 
 - The original and best implementation of the paper's ideas is
   [racket/contract](http://doc.racket-lang.org/reference/contracts.html?q=contract)
