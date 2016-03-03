@@ -73,7 +73,7 @@ var derive =
            return function(x) {
             return (fn(x+deltaX/2) - fn(x-deltaX/2))/deltaX
            }
-         }
+         })
 ```
 
 In this example, we use `c.fun` to instantiate a contract stating that `derive`
