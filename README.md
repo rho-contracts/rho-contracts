@@ -134,7 +134,7 @@ Given the definition for `derive` above:
   for the return value of the call.
 ```
 
-Note how these contract errors are triggered much faster than JavaScript's
+Note how these contract errors are triggered earlier than JavaScript's
 native error, they provide clearer error messages, and they highlight the
 exactly line where the error is, rather than some line deep inside the
 implementation of `derive`.
@@ -183,24 +183,25 @@ For example:
 ```javascript
 // Define a contract for position objects with two methods, `moveX` and `moveY`:
 > var posContract =
-c.object({
-x: c.number,
-y: c.number,
-moveX: c.fun({dx: c.number}),
-moveY: c.fun({dx: c.number})
-})
+    c.object({
+        x: c.number,
+        y: c.number,
+        moveX: c.fun({dx: c.number}),
+        moveY: c.fun({dx: c.number})
+    })
 
 // Define a constructor for position objects. Objects returned
 // will have their methods `.wrap()`-ed with contract-checking shells:
 > var makePos = c.fun({x: c.number}, { y: c.number })
-.returns(posContract)
-.wrap(
-function(x, y) {
-return { x: x, y: y,
-moveX: function(dx) { return makePos(this.x + dx, this.y) }
-moveY: function(dy) { return makePos(this.x, this.y + dy) }
-}
-})
+                 .returns(posContract)
+                 .wrap(
+                     function(x, y) {
+                         return { x: x,
+                                  y: y,
+                                  moveX: function(dx) { return makePos(this.x + dx, this.y) }
+                                  moveY: function(dy) { return makePos(this.x, this.y + dy) }
+                     }
+                 })
 
 // Try to misuse the object:
 > makePos(5, 7).moveX("left")
@@ -212,10 +213,10 @@ for the `dx` argument of the call.
 
 ## Tutorial
 
-*(In a delightful instance of self-reference, the contract library is documented
+*In a delightful instance of self-reference, the contract library is documented
  and checked using the contract library itself. If reading tutorials is not your thing,
  you may want to instead look at the contracts placed on `rho-contracts.js`'s functions
- and methods by reading [`contract.face.js`](https://github.com/sefaira/rho-contracts.js/blob/master/contract.face.js) directly.)*
+ and methods by reading [`contract.face.js`](https://github.com/sefaira/rho-contracts.js/blob/master/contract.face.js) directly.*
 
 The contract library is typically `require`'d and bound to a variable called `c`:
 
@@ -319,7 +320,7 @@ created in an application or in a particular module:
 ContractError: Expected matches(/^[0-9]+(\.[0-9]+)?$/), but got '10.'
 ```
 Another option is to make a clone of the contract library at the top of
-your NodeJs module and keep the contracts created and used in that module in the clone:
+your node module and keep the contracts created and used in that module in the clone:
 
 ```javascript
 > var __ = require('underscore')
@@ -335,7 +336,7 @@ before storing them:
 
 ```javascript
 > c.numberAsString = c.matches(/^[0-9]+(\.[0-9]+)?$/)
-                       .rename('numberAsString')
+                      .rename('numberAsString')
 
 > c.numberAsString.check("o_0.")           // boom
 ContractError: Expected numberAsString, but got 'o_0.'
@@ -418,8 +419,8 @@ created at once in one expression, like this:
 ```javascript
 var square = c.fun( { x: c.number } )
               .wrap(
-  function (x) { return x * x } )
-  ```
+                function (x) { return x * x } )
+```
 
 Each argument's contract is specified in the call to `c.fun()` using a hash
 table containing exactly one field. The name of that field is used by
@@ -446,15 +447,15 @@ additional one-field hashes, separated by commas:
 ```javascript
 var area = c.fun( { x: c.number }, { y: c.number } )
             .wrap(
-  function(x, y) { return x * y }
-  ```
+              function(x, y) { return x * y }
+```
 
 Attempting to pass all arguments as a single hash is an error:
 
 ```javascript
 > var area = c.fun( { x: c.number,  y: c.number } )
 >             .wrap(          // ^---- THIS IS WRONG
->   function(x, y) { return x * y }
+>               function(x, y) { return x * y }
 ContractLibraryError: fun: expected exactly one
 key to specify the name of the 1st arguments, but got 2
 ```
@@ -578,7 +579,7 @@ array and wrap each function with the function contract:
 > var operations_wrapped =
     c.array(c.fun({ x: c.number }).returns(c.number))
      .wrap(operations)
-     ```
+```
 
 Here, `.wrap()` returns a new array containing the wrapped functions. So
 long as the array's functions are used correctly, the presence of the contract
@@ -672,10 +673,10 @@ check. In order to distinguish functions intended be used as methods,
 takes the contract on `this` as its first argument:
 
 ```javascript
- > c.animal = c.object({ nLegs: c.number,
-                         name:  c.string,
-                         speak: c.method(c.animal, { n: c.number}).returns(c.string) })
-                                       // ^--- Ousp, this doesn't actually work.
+> c.animal = c.object({ nLegs: c.number,
+                        name:  c.string,
+                        speak: c.method(c.animal, { n: c.number}).returns(c.string) })
+                                      // ^--- Ousp, this doesn't actually work.
 ```
 
 However, this attempt fails due to the cyclic reference: the line of code
@@ -757,7 +758,7 @@ ContractError: Field `carModel` required, got { trunkSize: 9.8 }
 
  > c.car.strict().check({ carModel: "semitruck", towing: true }) // but this is not
  ContractError: Found the extra field `towing` in { carModel: 'semitruck', towing: true }
- ```
+```
 
 - `.extend` :
 
