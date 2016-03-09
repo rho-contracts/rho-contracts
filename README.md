@@ -2,15 +2,41 @@
     - License, v. 2.0. If a copy of the MPL was not distributed with this
     - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+
+
 rho-contracts.js
 ===============
 
 Racket-style Higher-Order Contracts in Plain JavaScript
 
+## Table of Content
+[Installation](#installation)  
+[Introduction](#introduction)  
+[Run-time vs Compile-time](#runtime)  
+[Higher-order contracts](#higher-order)  
+[Blame, Blame-correctness, and Blame Tracking](#blame)  
+[Contracts on Functions-as-Values](#functions-as-values)  
+[Tutorial](#tutorial)  
+[Basic Value Contracts](#basic-value)  
+[Storing Custom Contracts](#storing)  
+[Data Structure Contracts](#data-structure)  
+[Contracts on Functions](#functions)  
+[Contracts for Optional Arguments](#optargs)  
+[Wrapping vs Checking](#wrap-vs-check)  
+[Object Contracts](#objects)  
+[A Lightweight Notation](#lightweight)  
+[Contracts on Constructors](#constructors)  
+[Undocumented Functionality](#undocumented)  
+[Related Work](#related)  
+[License](#license)  
+
+
+<a name="installation"/>
 ## Installation
 
 `npm install rho-contracts`
 
+<a name="introduction"/>
 ## Introduction
 
 *(scroll down to* Tutorial *to skip the intro)*
@@ -36,6 +62,7 @@ into everything else, and its habit turning anything into a `null` at a moment's
 notice. When I couldn't stand it anymore, I wrote this contract library.
 
 
+<a name="runtime"/>
 ### Run-time vs Compile-time
 
 `rho-contracts.js` is purely a run-time checker. It will never give a compile-time
@@ -44,6 +71,7 @@ where the assertions are written in a style similar to that of a static type
 system, and whose checking discipline is sufficiently strict to provide similar
 guarantees as a type system (though not the same.)
 
+<a name="higher-order"/>
 ### Higher-order contracts
 
 `rho-contracts.js` is an *higher-order* contract library, as opposed to
@@ -140,6 +168,7 @@ exactly line where the error is, rather than some line deep inside the
 implementation of `derive`.
 
 
+<a name="blame"/>
 ### Blame, Blame-correctness, and Blame Tracking
 
 In the last example, when `fn` fails to return a number, which code is
@@ -169,6 +198,7 @@ system it was not possible to implement the report of blame in term of the name
 of the module interacting. `rho-contracts.js` only reports the function names.
 
 
+<a name="functions-as-values"/>
 ### Contracts on Functions-as-Values
 
 `rho-contracts.js`'s higher-order contracts can also be used to check the correctness
@@ -211,6 +241,7 @@ Expected number, but got 'left'
 for the `dx` argument of the call.
 ```
 
+<a name="tutorial"/>
 ## Tutorial
 
 *In a delightful instance of self-reference, the contract library is documented
@@ -224,6 +255,7 @@ The contract library is typically `require`'d and bound to a variable called `c`
 c = require('rho-contracts')
 ```
 
+<a name="basic-value"/>
 ### Basic Value Contracts
 
 Some fields of `c` are contract objects you can use directly, such as the
@@ -295,6 +327,7 @@ heterogeneous functions that are common in idiomatic JavaScript, but that would
 be refused outright by most static type systems (that is so awesome.)
 
 
+<a name="storing"/>
 ### Storing Custom Contracts
 
 The contract library provides a rich collection of contract function to
@@ -343,6 +376,7 @@ ContractError: Expected numberAsString, but got 'o_0.'
 ```
 
 
+<a name="data-structure"/>
 ### Data Structure Contracts
 
 A `c.array()` contract checks that all items in the array passes the given
@@ -385,6 +419,7 @@ The full value being checked was:
 { a: true, b: true, c: false, d: null, e: false }
 ```
 
+<a name="functions"/>
 ### Contracts on Functions
 
 Contract on functions are implemented by wrapping the implementing
@@ -492,19 +527,19 @@ ContractError: Expected string, but got 105
 for the return value of the call.
 ```
 
-* `c.fun().ths( ---- )` : We mention `.ths()` for completeness. This contract
+* `c.fun().thisArg( ---- )` : We mention `.thisArg()` for completeness. This contract
   checks that the method was invoked on an object of the right form. (Note, this
-  method name is missing an "i" to avoid clashing with the JavaScript reserved
-  word "this"). However, usages of `c.fun().ths` are rare. It is more customary
+  method name is not called `this` to avoid clashing with the JavaScript reserved
+  word `this`). However, usages of `c.fun().thisArg` are rare. It is more customary
   to use the `.method()` method on object contacts (See *Contracts on Objects*
-  below.) `c.fun().ths` is useful when using the *Apply Invocation Pattern*
+  below.) `c.fun().thisArg` is useful when using the *Apply Invocation Pattern*
   described in Chapter 4 of Douglas' Crockford' *JavaScript, The Good Parts*.
 
 ```javascript
 > var makeStatus = function(string) { return { status:  string } }
 
 > var get_status =
-   c.fun().ths(c.object({status: c.string})).returns(c.string)
+   c.fun().thisArg(c.object({status: c.string})).returns(c.string)
     .wrap(
        function() { return this.status })
 
@@ -518,6 +553,7 @@ for this `this` argument of the call.
 
 
 
+<a name="optargs"/>
 ### Contracts for Optional Arguments
 
 Contracts can be marked optional using `c.optional()` When used for a function's
@@ -543,6 +579,8 @@ ContractError: Too many arguments, expected at most 1 but got 2
 ```
 
 
+
+<a name="wrap-vs-check"/>
 ### Wrapping vs Checking
 
 Recall, we cannot tell if a function will be miscalled until it is called, and
@@ -617,6 +655,8 @@ The `.wrap()` method wraps recursively all JavaScript's data structures, array,
 hashes, tuples, and objects.
 
 
+
+<a name="objects"/>
 ### Object Contracts
 
 Since objects in JavaScript are constructed out of normal hash tables containing
@@ -667,7 +707,7 @@ animal -- an error could go undetected:
 undefined says tweettweet.     // Yikes!
 ```
 
-The `.ths()` method on function contracts can be used to add this additional
+The `.thisArg()` method on function contracts can be used to add this additional
 check. In order to distinguish functions intended be used as methods,
 `rho-contracts.js` provides `c.method()`, which is a variant of `c.fun()` that
 takes the contract on `this` as its first argument:
@@ -765,7 +805,85 @@ ContractError: Field `carModel` required, got { trunkSize: 9.8 }
 - .strict on tuples
 
 
-### More Functionality
+
+<a name="lightweight"/>
+### A Lightweight Notation ###
+
+All `rho-contracts.js` functions will automatically promote simple values
+to the corresponding contract when passed to a function that expects a
+contract. This applies to arrays of one argument, non-functions, and
+non-objects. Promoting these allows a simpler notation for
+contracts. However, automatically promoting objects is too error prone,
+so to use the lighter notation in the presence of object contracts,
+call `toContract` explicitly, like this:
+
+```javascript
+cc.kidPark = toContract({
+    name: c.string,
+    acres: c.number,
+    playunit: {
+        junglebars: c.bool,
+        slides: c.number,
+        ladders: [{
+            color: c.string,
+            size: c.string
+        }]
+    }
+
+})
+
+```
+
+
+<a name="constructors"/>
+### Contracts on Constructors
+
+Constructors functions are handled specially for three reasons.
+
+* First, though in JavaScript function are objects, `rho-contracts.js`
+enforces a strict distinction in order to provide earlier error
+messages in the common cases. Constructor functions are a notable
+exception.
+* Second, constructor functions occur in the right-hand side
+of the `instanceof` operator. The contract-checking shells introduced
+when checking function contracts could make these tests fail without
+explicit control of when the wrapping occurs.
+* And third, wrapping the methods in the constructor's `prototype`
+field make it possible to share the contract-checking shells across
+instances, thus reducing memory overhead.
+
+Because of this, there is no `constructor` contract. Instead,
+use `wrapConstructor` to wrap a constructor once near its definition
+point, like this.
+
+```javascript
+  function CounterImpl(x) {
+    this.x = x;
+  }
+  CounterImpl.prototype.inc = function (i) {
+    this.x += i;
+  }
+
+  var Counter = c.wrapConstructor(CounterImpl, [{x: c.number}], {
+    inc: c.fun({i: c.number})
+  });
+
+  var instance = new Counter(5);
+  instance.should.be.instanceof(Counter);
+  instance.x.should.eql(5);
+  instance.inc(2)
+  instance.x.should.eql(7);
+```
+
+The fields specified in the third argument to `wrapConstructor` do not
+need to be comprehensive. Additional fields present in `prototype` are
+copied to the result without check nor wrapping. Notably, this means
+that private methods and fields can be omitted from the contract.
+
+
+
+<a name="undocumented"/>
+### Undocumented Functionality
 
 Additional functionality that's not documented yet:
 
@@ -785,14 +903,13 @@ And also
 
 - anyFunction
 - isA
-- the contract contract
-- implicity promotion to contract
-- toContract: promoting values to a contract explicitely.
 - quacksLike
 - silentAnd
 - `c.fn()`
 - setErrorMessageInspectionDepth
 
+
+<a name="related"/>
 ### Related Work
 
 - `rho-contracts.js` is an implementation of the paper [*Contracts for higher-order
@@ -829,6 +946,8 @@ ICFP 2002.
 
 
 
+
+<a name="license"/>
 ### License
 
 This library was created at Sefaira.com, originally for internal use. We are

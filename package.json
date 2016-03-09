@@ -9,24 +9,25 @@
   "dependencies": {
     "callsite": "1.0.0",
     "marked": "^0.3.5",
-    "mocha": "1.14.x",
     "mustache": "0.7.x",
-    "should": "1.2.x",
-    "underscore": "1.5.x"
+    "should": "1.2.2",
+    "underscore": "1.8.x"
+  },
+  "devDependencies": {
+    "mocha": "1.14.x"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sefaira/rho-contracts.js.git"
+    "url": "https://github.com/bodylabs/rho-contracts.js.git"
   },
   "readmeFilename": "README.md",
   "gitHead": "aef2505b61452b8322c0d5ec57144190ac09f175",
   "bugs": {
-    "url": "https://github.com/sefaira/rho-contracts.js/issues"
+    "url": "https://github.com/bodylabs/rho-contracts.js/issues"
   },
-  "devDependencies": {},
   "scripts": {
-    "test": "make test"
+    "test": "mocha ."
   },
-  "author": "Guillaume Marceau <guillaume.marceau@sefaira.com> (http://sefaira.com/)",
+  "author": "Guillaume Marceau <guillaume.marceau@bodylabs.com> (http://bodylabs.com/)",
   "license": "Mozilla Public License Version 2.0"
 }

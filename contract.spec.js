@@ -24,10 +24,6 @@ Object.prototype.toString = function () {
   else return oldToString.call(that);
 };
 
-var keyvals = function(data) {
-  return __.map(data, function(v, k) { return [k, v]; });
-};
-
 should.Assertion.prototype.throwError = function (message) {
   this.throw(message);
 };
@@ -50,7 +46,7 @@ should.Assertion.prototype.throwType = function(type, message){
   }
 
   if (caught) {
-    console.log('\ncontracts/contract.spec.js Line 49:\n'+err+'\n'+err.renderedStack+'\n\n');
+    //console.log('\ncontracts/contract.spec.js Line 49:\n'+err+'\n'+err.renderedStack+'\n\n');
     if (err.name !== type.name) {
       ok = false;
       errorInfo = "but the error was " + err;
@@ -66,17 +62,51 @@ should.Assertion.prototype.throwType = function(type, message){
       throw new Error("should.throw expects a string or a regexp");
     }
   }
+
   this.assert(
     ok,
-    'expected a ' + type.name + ' to be thrown ' + errorInfo,
-    'expected no ' + type.name + ' to be thrown, got "' + err.message + '"');
+    function () { return 'expected a ' + type.name + ' to be thrown ' + errorInfo },
+    function () { return 'expected no ' + type.name + ' to be thrown, got "' + err.message + '"' });
 
   return this;
 };
 
 describe ("toContract", function () {
   it ("passes contracts", function () { c.toContract(c.any).contractName.should.eql(c.any.contractName); });
-  it ("refuses to wrap objects", function () { (function () { c.toContract({})}).should.throwError(/Cannot promote/); } );
+  it ("wrap objects", function () { c.toContract({}).should.be.an.instanceof(c.Contract); } );
+  it ("wrap objects recursively", function () {
+    var kidPark = c.toContract({
+      name: c.string,
+      acres: c.number,
+      playunit: {
+        junglebars: c.bool,
+        slides: c.number,
+        ladders: [{
+          color: c.string,
+          size: c.string
+        }]
+      }
+    });
+
+    var example = {
+      name: "corner park",
+      acres: 0.1,
+      playunit: {
+        junglebars: true,
+        slides: 3,
+        ladders: [{
+          color: "red",
+          size: "large"
+        }, {
+          color: "yellow",
+          size: "medium"
+        },]
+      }
+    }
+    kidPark.check(example).should.be.eql(example);
+    example.playunit.ladders[1].size = 0;
+    (function () { kidPark.check(example) }).should.throwContract(/Expected string/);
+  });
   it ("wraps arrays", function () { c.toContract([c.any]).should.be.an.instanceof(c.Contract); });
   it ("wraps values", function () { c.toContract(5).contractName.should.be.eql(c.value(5).contractName); });
 });
@@ -226,6 +256,55 @@ describe ("strict", function () {
 });
 
 
+describe ("wrapConstructor", function () {
+
+  function Example(x) {
+    this.x = x;
+  }
+  Example.prototype.inc = function (i) {
+    this.x += i;
+  }
+  Example.prototype._dec = function (i) {
+    this.x -= i;
+  }
+
+  var Wrapped = c.wrapConstructor(Example, [{x: c.number}], {
+    inc: c.fun({i: c.number})
+  });
+
+  it ("creates a wrapped object", function () {
+    var instance = new Wrapped(5);
+    instance.should.be.instanceof(Wrapped);
+    instance.x.should.eql(5);
+    instance.inc(2)
+    instance.x.should.eql(7);
+  })
+
+  it ("refuses wrong constructor arguments", function () {
+    (function () { new Wrapped("boom") }).should.throwContract(/Example[\s\S]+argument/);
+  })
+
+  it ("produces an object that fails on bad input", function () {
+    (function () { new Wrapped(5).inc("five") } ).should.throwContract(/inc()[\s\S]+number/);
+  })
+
+  it ("places fields on instances even when omitted from the contract", function () {
+    var w = new Wrapped(4);
+    w._dec("twenty")
+    isNaN(w.x).should.be.ok;
+  })
+
+  it ("detects missing fields", function () {
+    (function () {
+      c.wrapConstructor(function Nothing() {}, [], {
+        inc: c.fun({i: c.number}),
+        _dec: c.fun({i: c.number})
+      });
+    }).should.throwType(c.privates.ContractLibraryError, /are missing[\s\S]+inc, _dec/);
+  })
+
+});
+
 describe ("fn", function () {
 
   var id = function(x) { return x; };
@@ -239,7 +318,7 @@ describe ("fn", function () {
   var strIdC = c.fn(c.number).returns(c.string);
   var twoIdC = c.fn(c.number, c.string).returns(c.tuple(c.number, c.string));
   var manyIdC = c.fn().extraArgs([c.number]).returns(c.number);
-  var thisC = c.fn(c.number).ths(c.object({x: c.string})).returns(c.string);
+  var thisC = c.fn(c.number).thisArg(c.object({x: c.string})).returns(c.string);
 
   var oneOptC = c.fn(c.number, c.optional(c.number));
 
@@ -285,7 +364,7 @@ describe ("fun", function () {
   var strIdC = c.fun({ the_arg: c.number }).returns(c.string);
   var twoIdC = c.fun({ fstArg: c.number}, { sndArg: c.string}).returns(c.tuple(c.number, c.string));
   var manyIdC = c.fun().extraArgs([c.number]).returns(c.number);
-  var thisC = c.fun({y: c.number}).ths(c.object({x: c.string})).returns(c.string);
+  var thisC = c.fun({y: c.number}).thisArg(c.object({x: c.string})).returns(c.string);
 
   it ("is a function", function () { idC.wrap(id).should.instanceof(Function); });
   it ("passes id(number)", function () { idC.wrap(id)(5).should.eql(5); });
