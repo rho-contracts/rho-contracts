@@ -835,38 +835,6 @@ function object(/*opt*/ fieldContracts) {
 }
 exports.object = object;
 
-function wrapConstructor(constructor, argContracts, fieldContracts) {
-  var name = null;
-  var match = constructor.toString().match(/function ([^\(]+)/)
-  if (match.length) {
-    name = match[1].trim();
-  }
-
-  var missing = _.difference(_.keys(fieldContracts), _.keys(constructor.prototype));
-
-  if (missing.length) {
-    throw new ContractLibraryError
-      ('wrapConstructor', false,
-       util.format("Some fields present %s are missing on the prototype: %s",
-                   name ? util.format("in %s's prototype contracts", name) : "in the contract",
-                   missing.join(', ')));
-  }
-
-  var wrappedConstructor = fun.apply(null, argContracts).wrap(constructor, name);
-
-
-  _.each(constructor.prototype, function (v, k) {
-    if (_.has(fieldContracts, k)) {
-      wrappedConstructor.prototype[k] = fieldContracts[k].wrap(v, k);
-    } else {
-      wrappedConstructor.prototype[k] = v;
-    }
-  });
-
-  return wrappedConstructor;
-};
-exports.wrapConstructor = wrapConstructor;
-
 
 //--
 //
@@ -964,6 +932,38 @@ function fnHelper(who, argumentContracts) {
   self.thisArg = function (c) { var self = this; return gentleUpdate(self, { thisContract: c }); };
   self.ths = self.thisArg; // for backward compatibility
   self.returns = function (c) { var self = this; return gentleUpdate(self, { resultContract: c}); };
+
+  self.wrapConstructor = function (constructor, prototypeFields) {
+      var name = null;
+      var match = constructor.toString().match(/function ([^\(]+)/)
+      if (match.length) {
+        name = match[1].trim();
+      }
+
+      var missing = _.difference(_.keys(prototypeFields), _.keys(constructor.prototype));
+
+      if (missing.length) {
+        throw new ContractLibraryError
+          ('wrapConstructor', false,
+           util.format("Some fields present %s are missing on the prototype: %s",
+                       name ? util.format("in %s's prototype contracts", name) : "in the contract",
+                       missing.join(', ')));
+      }
+
+      var wrappedConstructor = self.wrap(constructor, name);
+
+
+      _.each(constructor.prototype, function (v, k) {
+        if (_.has(prototypeFields, k)) {
+          wrappedConstructor.prototype[k] = prototypeFields[k].wrap(v, k);
+        } else {
+          wrappedConstructor.prototype[k] = v;
+        }
+      });
+
+      return wrappedConstructor;
+  };
+
   self.toString = function () {
     var self = this;
     return "c." + self.contractName + "(" +

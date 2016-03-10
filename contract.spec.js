@@ -268,7 +268,7 @@ describe ("wrapConstructor", function () {
     this.x -= i;
   }
 
-  var Wrapped = c.wrapConstructor(Example, [{x: c.number}], {
+  var Wrapped = c.fun({x: c.number}).wrapConstructor(Example, {
     inc: c.fun({i: c.number})
   });
 
@@ -296,7 +296,7 @@ describe ("wrapConstructor", function () {
 
   it ("detects missing fields", function () {
     (function () {
-      c.wrapConstructor(function Nothing() {}, [], {
+      c.fun().wrapConstructor(function Nothing() {}, {
         inc: c.fun({i: c.number}),
         _dec: c.fun({i: c.number})
       });

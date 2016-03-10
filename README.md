@@ -852,30 +852,31 @@ explicit control of when the wrapping occurs.
 field make it possible to share the contract-checking shells across
 instances, thus reducing memory overhead.
 
-Because of this, there is no `constructor` contract. Instead,
-use `wrapConstructor` to wrap a constructor once near its definition
-point, like this.
+Because of this, there is no `constructor` contract. Instead, use the
+`wrapConstructor` method on function contracts to wrap a
+constructor. To ensure `instanceof` check work correctly, do the
+wrapping only once at the definition point, like this:
 
 ```javascript
-  function CounterImpl(x) {
-    this.x = x;
-  }
-  CounterImpl.prototype.inc = function (i) {
-    this.x += i;
-  }
+function CounterImpl(x) {
+  this.x = x;
+}
+CounterImpl.prototype.inc = function (i) {
+  this.x += i;
+}
 
-  var Counter = c.wrapConstructor(CounterImpl, [{x: c.number}], {
-    inc: c.fun({i: c.number})
-  });
+var Counter = c.fun({x: c.number}).wrapConstructor(CounterImpl, {
+  inc: c.fun({i: c.number})
+});
 
-  var instance = new Counter(5);
-  instance.should.be.instanceof(Counter);
-  instance.x.should.eql(5);
-  instance.inc(2)
-  instance.x.should.eql(7);
+var instance = new Counter(5);
+instance.should.be.instanceof(Counter);
+instance.x.should.eql(5);
+instance.inc(2)
+instance.x.should.eql(7);
 ```
 
-The fields specified in the third argument to `wrapConstructor` do not
+The fields specified in the second argument to `wrapConstructor` do not
 need to be comprehensive. Additional fields present in `prototype` are
 copied to the result without check nor wrapping. Notably, this means
 that private methods and fields can be omitted from the contract.

@@ -120,7 +120,16 @@ functionContract.closeCycle(
 
   returns: c.method(functionContract, { resultContract: c.contract}).returns(functionContract)
     .doc("Returns a contract like `this` that accepts only calls that returns a",
-         "value that passes `resultContract`.")
+         "value that passes `resultContract`."),
+
+  wrapConstructor: c.method(functionContract, {constructor: c.anyFunction},
+                            {fieldContracts: c.hash(c.contract)})
+    .returns(c.anyFunction)
+    .doc("Takes a constructor function that is equipped with a `prototype` field and returns a",
+         "function that (1) checks its input according to the `argContracts` (2) has its `prototype`",
+         "wrapped according to the `fieldContracts` and (3) has a `prototype.constructor` field",
+         "pointing to itself")
+
   }).rename('functionContract')
     .doc("Contracts on functions have three extra methods."));
 
@@ -144,15 +153,6 @@ var contracts = {
          "If `data` does not contains any function contracts (nor any custom contract types that require wrapping),",
          "`wrap` returns `data` unchanged. Otherwise, it returns `data` wrapped with the machinery",
          "necessary for further contract checking."),
-
-  wrapConstructor: c.fun({constructor: c.anyFunction},
-                         {argContracts: c.array(c.hash(c.contract))},
-                         {fieldContracts: c.hash(c.contract)})
-    .returns(c.anyFunction)
-    .doc("Takes a constructor function that is equipped with a `prototype` field and returns a",
-         "function that (1) checks its input according to the `argContracts` (2) has its `prototype`",
-         "wrapped according to the `fieldContracts` and (3) has a `prototype.constructor` field",
-         "pointing to itself"),
 
   optional: c.fun({contract: c.contract}).returns(contractObject)
     .doc("Returns an optional version of `contract`. It will accept all falsy values in",
