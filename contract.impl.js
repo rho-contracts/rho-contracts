@@ -87,7 +87,7 @@ var stackContextItems = {
 
   and: function(i) {
     return { short: ".and("+i+")",
-             long: "for the " + ith(i) + " branch of the `and` contract." };
+             long: "for the " + ith(i) + " branch of the `and` contract" };
   },
 
   or: function(i) {
@@ -96,23 +96,28 @@ var stackContextItems = {
 
   arrayItem: function (i) {
     return { short: "["+i+"]",
-             long: "for the " + ith(i) + " element of the array.",
+             long: "for the " + ith(i) + " element of the array",
              i: i };
   },
 
   tupleItem: function (i) {
     return { short: "["+i+"]",
-             long: "for the " + ith(i) + " element of the tuple." };
+             long: "for the " + ith(i) + " element of the tuple" };
   },
 
   hashItem: function (k) {
     return { short: "." + k,
-             long: "for the key `" + k + "` of the hash." };
+             long: "for the key `" + k + "` of the hash" };
   },
 
   objectField: function (f) {
     return { short: "." + f,
-             long: "for the field `" + f + "` of the object." };
+             long: "for the field `" + f + "` of the object" };
+  },
+
+  protoField: function (f) {
+    return { short: "." + f,
+             long: "for the field `" + f + "` on the prototype" };
   },
 
   silent: { short: "", long: "" } // .silent is special, tested with === in `checkWContext`
@@ -195,11 +200,11 @@ ContractError.prototype = _.extend(Object.create(Error.prototype), {
     var thingNameWithParens = self.context.thingName + (self.context.contract.isFunctionContract ? "()" : "");
 
     if (!self.context.wrapping) {
-      self.message += "check on `" + thingNameWithParens + "` failed";
+      self.message += "check on `" + thingNameWithParens + "` failed:";
     } else if (self.context.blameMe) {
-      self.message += "`" + thingNameWithParens + "` broke its contract";
+      self.message += "`" + thingNameWithParens + "` broke its contract:";
     } else {
-      self.message += "broke the contract of `" + thingNameWithParens + "`";
+      self.message += "broke the contract on `" + thingNameWithParens + "`:";
     }
   },
 
@@ -786,12 +791,12 @@ function object(/*opt*/ fieldContracts) {
     var result = clone(data);
 
     _(self.fieldContracts).each(function (contract, field) {
-      if (_.has(data, field)) result[field] = next(gentleUpdate(contract, { thingName: field }),
-                                                    data[field],
-                                                    stackContextItems.objectField(field));
+      if (contract.needsWrapping) {
+        result[field] = next(gentleUpdate(contract, { thingName: field }),
+                             data[field],
+                             stackContextItems.objectField(field));
+      }
     });
-    var extra = _.difference(_.keys(data), _.keys(self.fieldContracts));
-    _(extra).each(function(f) { result[f] = data[f]; });
 
     return result;
   };
@@ -877,6 +882,14 @@ function checkOptionalArgumentCount(argumentContracts, extraArgumentContract, ac
   }
 }
 
+function functionName(fn) {
+  var match = fn.toString().match(/function ([^\(]+)/)
+  if (match) {
+    return match[1].trim();
+  } else {
+    return null;
+  }
+}
 function fnHelper(who, argumentContracts) {
   var self = new Contract(who);
   self.argumentContracts = argumentContracts;
@@ -886,9 +899,13 @@ function fnHelper(who, argumentContracts) {
   self.extraArgumentContract = false;
   self.thisContract = any;
   self.resultContract = any;
-  self.firstChecker = function (data) { var self = this; return _.isFunction(data); };
+  self.firstChecker = _.isFunction;
   self.wrapper = function (fn, next, context) {
     var self = this;
+
+    if (!context.thingName) {
+      context.thingName = functionName(fn);
+    }
 
     var r = function (/* ... */) {
       var contextHere = clone(context);
@@ -918,8 +935,14 @@ function fnHelper(who, argumentContracts) {
                             stackContextItems.extraArguments, true));
 
       var result = fn.apply(wrappedThis, wrappedArgs.concat(extraArgs));
+      self.resultContract.firstChecker(result);
       return next(self.resultContract, result, stackContextItems.result, false);
     };
+
+    if (fn.prototype) {
+      r.prototype = fn.prototype;
+    }
+
     return r;
 
 
@@ -933,35 +956,60 @@ function fnHelper(who, argumentContracts) {
   self.ths = self.thisArg; // for backward compatibility
   self.returns = function (c) { var self = this; return gentleUpdate(self, { resultContract: c}); };
 
-  self.wrapConstructor = function (constructor, prototypeFields) {
-      var name = null;
-      var match = constructor.toString().match(/function ([^\(]+)/)
-      if (match.length) {
-        name = match[1].trim();
-      }
+  self.constructs = function (prototypeFields) {
+    var self = this;
 
-      var missing = _.difference(_.keys(prototypeFields), _.keys(constructor.prototype));
+    var oldWrapper = self.wrapper;
 
-      if (missing.length) {
-        throw new ContractLibraryError
-          ('wrapConstructor', false,
-           util.format("Some fields present %s are missing on the prototype: %s",
-                       name ? util.format("in %s's prototype contracts", name) : "in the contract",
+    return gentleUpdate(self, {
+
+      nestedChecker: function (v) {
+        var self = this;
+
+        var missing = _.difference(_.keys(prototypeFields), _.allKeys(v.prototype));
+        if (missing.length) {
+          throw new ContractLibraryError
+          ('constructs', false,
+           util.format("Some fields present %s prototype contract are missing on the prototype: %s",
+                       self.thingName ? util.format("in %s's", self.thingName) : "in the",
                        missing.join(', ')));
-      }
-
-      var wrappedConstructor = self.wrap(constructor, name);
-
-
-      _.each(constructor.prototype, function (v, k) {
-        if (_.has(prototypeFields, k)) {
-          wrappedConstructor.prototype[k] = prototypeFields[k].wrap(v, k);
-        } else {
-          wrappedConstructor.prototype[k] = v;
         }
-      });
+      },
 
-      return wrappedConstructor;
+      wrapper: function (fn, next, context) {
+        var self = this;
+
+        var wrappedFnWithoutResultCheck = oldWrapper.call(gentleUpdate(self, { resultContract: any }), fn, next, context);
+
+        var wrappedFn = function (/* ... */) {
+          wrappedFnWithoutResultCheck.apply(this, arguments);
+          context.stack.push(stackContextItems.result);
+          var result = self.resultContract.wrap(this, functionName(fn));
+          context.stack.pop();
+          return result;
+        }
+
+        wrappedFn.prototype = Object.create(fn.prototype);
+        Object.defineProperty(wrappedFn.prototype, "constructor" , {
+          enumerable: false,
+          writable: true,
+          configurable: true,
+          value: fn
+        });
+
+        for (var k in fn.prototype) {
+          if (_.has(prototypeFields, k)) {
+            // Calling `wrap` here instead of `next` in order to get a fresh
+            // context with a fresh `thingName`.
+            wrappedFn.prototype[k] = prototypeFields[k].wrap(wrappedFn.prototype[k], k);
+          }
+        }
+
+        return wrappedFn;
+      }
+    });
+
+
   };
 
   self.toString = function () {

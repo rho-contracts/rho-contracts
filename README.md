@@ -25,7 +25,7 @@ Racket-style Higher-Order Contracts in Plain JavaScript
 [Wrapping vs Checking](#wrap-vs-check)  
 [Object Contracts](#objects)  
 [A Lightweight Notation](#lightweight)  
-[Contracts on Constructors](#constructors)  
+[Contracts on Prototypes and Constructors](#constructors)  
 [Undocumented Functionality](#undocumented)  
 [Related Work](#related)  
 [License](#license)  
@@ -836,51 +836,76 @@ cc.kidPark = toContract({
 
 
 <a name="constructors"/>
-### Contracts on Constructors
+### Contracts on Prototypes and Constructors
 
-Constructors functions are handled specially for three reasons.
-
-* First, though in JavaScript function are objects, `rho-contracts.js`
-enforces a strict distinction in order to provide earlier error
-messages in the common cases. Constructor functions are a notable
-exception.
-* Second, constructor functions occur in the right-hand side
-of the `instanceof` operator. The contract-checking shells introduced
-when checking function contracts could make these tests fail without
-explicit control of when the wrapping occurs.
-* And third, wrapping the methods in the constructor's `prototype`
-field make it possible to share the contract-checking shells across
-instances, thus reducing memory overhead.
-
-Because of this, there is no `constructor` contract. Instead, use the
-`wrapConstructor` method on function contracts to wrap a
-constructor. To ensure `instanceof` check work correctly, do the
-wrapping only once at the definition point, like this:
+Constructors function can be wrapped normally with functions contracts, like this:
 
 ```javascript
 function CounterImpl(x) {
   this.x = x;
+  return this; // see below
 }
 CounterImpl.prototype.inc = function (i) {
   this.x += i;
 }
 
-var Counter = c.fun({x: c.number}).wrapConstructor(CounterImpl, {
-  inc: c.fun({i: c.number})
-});
+var Counter = c.fun({x: c.number})
+    .returns(c.object({
+        inc: c.fun({i: c.number}),
+        x: c.number
+    }))
+    .wrap(CounterImpl);
 
 var instance = new Counter(5);
-instance.should.be.instanceof(Counter);
 instance.x.should.eql(5);
 instance.inc(2)
 instance.x.should.eql(7);
 ```
 
-The fields specified in the second argument to `wrapConstructor` do not
-need to be comprehensive. Additional fields present in `prototype` are
-copied to the result without check nor wrapping. Notably, this means
-that private methods and fields can be omitted from the contract.
+However, this usage raises two concerns:
 
+* First, if the constructor function omits `return` and relies on
+  the semantic of `new` invocations to automaticly return the newly
+  constructed object, contracts on return values (placed with
+  `returns`) will fail.
+* Second, the common pattern of placing methods on the prototype in
+  order to share them across instances fails to acheive the intended
+  memory savings since every newly constructed instance receives a
+  contract-checking shells for the methods present on the prototype.
+
+
+To avoid these issues, use the `constructs` method on function
+contracts.
+
+```javascript
+function CounterImpl(x) {
+  this.x = x;
+  // return this; // return statement omitted
+}
+
+var Counter = c.fun({x: c.number})
+               .constructs({
+                 inc: c.fun({i: c.number})
+               })
+               .returns(c.object({x: c.number}))
+
+var instance = new Counter(5);
+instance.should.have.property('inc')
+instance.should.not.have.ownProperty('inc')
+```
+
+The argument to `constructs` specifies the contracts on the
+`prototype` of the function. `constructs` is not strict, in the
+sense that additional fields on the constructor's `prototype`, but not
+present in the contract, will appear on the constructed objects'
+prototype without checks nor wrapping. Notably, this means that
+private methods and fields can be omitted from the contract.
+
+Note that that contract-checking shells introduced by rho-contracts
+disturb usages of the `constructor` property. Since the `constructor`
+field of the prototype continue to point to the original unwrapped
+function the equality `new Counter(5).constructor === Counter` no
+longer holds.
 
 
 <a name="undocumented"/>

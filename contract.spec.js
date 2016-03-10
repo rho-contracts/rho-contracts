@@ -256,7 +256,7 @@ describe ("strict", function () {
 });
 
 
-describe ("wrapConstructor", function () {
+describe ("constructs", function () {
 
   function Example(x) {
     this.x = x;
@@ -268,9 +268,9 @@ describe ("wrapConstructor", function () {
     this.x -= i;
   }
 
-  var Wrapped = c.fun({x: c.number}).wrapConstructor(Example, {
+  var Wrapped = c.fun({x: c.number}).constructs({
     inc: c.fun({i: c.number})
-  });
+  }).wrap(Example);
 
   it ("creates a wrapped object", function () {
     var instance = new Wrapped(5);
@@ -278,17 +278,24 @@ describe ("wrapConstructor", function () {
     instance.x.should.eql(5);
     instance.inc(2)
     instance.x.should.eql(7);
+    instance.constructor.should.eql(Example);
   })
 
   it ("refuses wrong constructor arguments", function () {
     (function () { new Wrapped("boom") }).should.throwContract(/Example[\s\S]+argument/);
   })
 
+  it ("refuses incorrectly constructed objects", function () {
+    var Wrap = c.fun({x: c.number}).constructs({}).returns(c.object({x: c.string}))
+        .wrap(Example);
+    (function () { new Wrap(4) }).should.throwContract(/Example[\s\S]+ string, but got 4/)
+  })
+
   it ("produces an object that fails on bad input", function () {
     (function () { new Wrapped(5).inc("five") } ).should.throwContract(/inc()[\s\S]+number/);
   })
 
-  it ("places fields on instances even when omitted from the contract", function () {
+  it ("fields omitted from the contract can be used normally", function () {
     var w = new Wrapped(4);
     w._dec("twenty")
     isNaN(w.x).should.be.ok;
@@ -296,13 +303,55 @@ describe ("wrapConstructor", function () {
 
   it ("detects missing fields", function () {
     (function () {
-      c.fun().wrapConstructor(function Nothing() {}, {
+      c.fun().constructs({
         inc: c.fun({i: c.number}),
         _dec: c.fun({i: c.number})
-      });
-    }).should.throwType(c.privates.ContractLibraryError, /are missing[\s\S]+inc, _dec/);
+      }).wrap(function Blank() {})}).should.throwType(c.privates.ContractLibraryError, /are missing[\s\S]+inc, _dec/);
   })
 
+  describe("in the presence of the prototype chain", function (){
+
+    function SubExample(x) {
+      Example.call(this, x)
+    }
+    SubExample.prototype = Object.create(Example.prototype)
+    SubExample.prototype.pair = function (n) {
+      return [this.x, this.x]
+    }
+    SubExample.prototype.reset = function () {
+      this.x = 0;
+    }
+
+    var WrappedSubExample = c.fun({i: c.number}).constructs({
+      inc: c.fun({i: c.number}),
+      pair: c.fun().returns(c.array(c.number))
+    }).wrap(SubExample);
+
+    it ("produces a usable object with shared methods", function () {
+      var instance = new WrappedSubExample(10);
+      instance.should.have.property('pair');
+      instance.should.not.have.ownProperty('pair');
+      instance.should.have.property('inc');
+      instance.should.not.have.ownProperty('inc');
+      instance.pair().should.eql([10, 10]);
+    })
+    it ("allows use of methods from up the chain" , function () {
+      var instance = new WrappedSubExample(10)
+      instance.inc(2)
+      instance.x.should.eql(12)
+    })
+    it ("it detects misuses of methods from up the chain", function () {
+      var instance = new WrappedSubExample(10);
+      (function () { instance.inc("nope") }).should.throwContract(/number.*nope/);
+      (function () { instance.pair(20) }).should.throwContract(/Wrong number of arg/);
+    })
+    it ("methods up the chain omitted from the contract can be used normally", function () {
+      var instance = new WrappedSubExample(10)
+      instance._dec(3)
+      instance.x.should.eql(7)
+    })
+
+  })
 });
 
 describe ("fn", function () {
