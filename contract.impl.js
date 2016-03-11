@@ -977,14 +977,25 @@ function fnHelper(who, argumentContracts) {
         var self = this;
 
         var wrappedFnWithoutResultCheck = oldWrapper.call(gentleUpdate(self, { resultContract: any }), fn, next, context);
-
         var wrappedFn = function (/* ... */) {
+          var contextHere = clone(context);
+          contextHere.stack = clone(context.stack);
+          contextHere.thingName = self.thingName || contextHere.thingName;
+
           var receivedResult = wrappedFnWithoutResultCheck.apply(this, arguments);
-          context.stack.push(stackContextItems.result);
-          var resultToCheck = receivedResult || this;
-          var result = self.resultContract.wrap(resultToCheck, functionName(fn));
-          context.stack.pop();
-          return resultToCheck;
+          contextHere.stack.push(stackContextItems.result);
+
+          // Constructor semantic according to the JavaScript standard,
+          // cf. http://stackoverflow.com/a/1978474/35902
+          var resultToCheck;
+          if (_.isObject(receivedResult)) {
+            resultToCheck = receivedResult; 
+          } else {
+            resultToCheck = this;
+          }
+          var result = checkWrapWContext(self.resultContract, resultToCheck, contextHere);
+          contextHere.stack.pop();
+          return result;
         };
 
         wrappedFn.prototype = Object.create(fn.prototype);
@@ -998,9 +1009,9 @@ function fnHelper(who, argumentContracts) {
         });
 
         _.each(prototypeFields, function (v, k) {
-          // Calling `wrap` here instead of `next` in order to get a fresh
-          // context with a fresh `thingName`.
-          wrappedFn.prototype[k] = v.wrap(wrappedFn.prototype[k], k);
+          var freshContext = _.clone(context);
+          freshContext.thingName = k;
+          wrappedFn.prototype[k] = checkWrapWContext(v, wrappedFn.prototype[k], freshContext);
         });
 
         return wrappedFn;

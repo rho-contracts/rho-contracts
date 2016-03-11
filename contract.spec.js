@@ -11,6 +11,7 @@
 var should = require('should');
 var __ = require('underscore');
 var c = require('./contract.face');
+var fs = require('fs');
 
 Array.prototype.toString = function () {
   return "[" + this.join(", ") + "]";
@@ -328,9 +329,15 @@ describe ("constructs", function () {
   });
 
   it ("supports returning explicitly", function () {
-    var Constructor = function () { return 5; };
-    c.fun().returns(c.number).constructs({}).wrap(Constructor)().should.eql(5);
-  })
+    var theReturnValue = {x: 5};
+    var Constructor = function () { this.x = 1; return theReturnValue; };
+    var Wrapped = c.fun().returns(c.any).constructs({}).wrap(Constructor);
+    new Wrapped().should.eql({x: 5});
+    theReturnValue = "foo";
+    new Wrapped().should.eql({x: 1});
+    theReturnValue = 5;
+    new Wrapped().should.eql({x: 1});
+  });
 
   describe("in the presence of the prototype chain", function (){
 
@@ -374,6 +381,52 @@ describe ("constructs", function () {
     });
 
   });
+
+  describe('when nested inside other contracts', function () {
+    var theContract = c.fun({x: c.object({
+      BuildIt: c.fn().constructs({
+        inc: c.fun({i: c.any}).returns(c.number)
+      }).returns(c.object())        
+    })}, {v: c.any});
+
+    var theFunction = function (x, v) {
+      var instance = new x.BuildIt();
+      return instance.inc(v);
+    };
+
+    var wrapped = theContract.wrap(theFunction);
+
+    var TheConstructor = function () {};
+    TheConstructor.prototype.inc = function (i) {
+      return i + 1;
+    };
+
+    var theObject = {BuildIt: TheConstructor};
+    
+    it ('produces a usable object', function () {
+      wrapped(theObject, 10).should.be.eql(11);
+    });
+
+    it ('detects misuses', function () {
+      (function () { wrapped(theObject, "ten"); }).should.throwContract(/inc[\s\S]+return value of the call/);
+    });
+    
+    it ('produces a short stack context on prototype function calls', function () {
+      try {
+        wrapped(theObject, "ten");        
+      } catch (e) {
+        e.message.should.not.match(/at position/);
+      }
+    });
+    it ('the truncated context retains the original wrap location', function () {
+      var index = 
+          __.findIndex(fs.readFileSync('./contract.spec.js').toString().split('\n'),
+                       function (line) { return line.match(/theContract.wrap\(theFunction\)/); });
+      var expected = new RegExp('contract was wrapped at: .*/contract.spec.js:'+(index+1));
+      (function () { wrapped(theObject, "ten"); }).should.throwContract(expected);
+    });
+  })
+  ;
 });
 
 describe ("fn", function () {
