@@ -1,6 +1,6 @@
 {
   "name": "rho-contracts",
-  "version": "0.0.8",
+  "version": "1.0.0",
   "description": "Racket-style Higher Order Contracts in Plain Javascript",
   "main": "index.js",
   "keywords": [
@@ -14,7 +14,8 @@
     "underscore": "1.8.x"
   },
   "devDependencies": {
-    "mocha": "1.14.x"
+    "mocha": "1.14.x",
+    "jshint": "^2.9.1"
   },
   "repository": {
     "type": "git",
@@ -26,7 +27,8 @@
     "url": "https://github.com/bodylabs/rho-contracts.js/issues"
   },
   "scripts": {
-    "test": "mocha ."
+      "test": "mocha .",
+      "lint": "jshint *.js"
   },
   "author": "Guillaume Marceau <guillaume.marceau@bodylabs.com> (http://bodylabs.com/)",
   "license": "Mozilla Public License Version 2.0"

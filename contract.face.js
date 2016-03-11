@@ -5,8 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef: true, newcap: true undef: true, strict: true */
-/*global exports, require */
+/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef:true, newcap:true, undef:true, strict:false, node:true */
 
 var __ = require('underscore'); // '__' because node's repl already binds '_'
 var c = require('./contract.impl');
@@ -119,8 +118,16 @@ functionContract.closeCycle(
          "implicit `this` argument passes `thisContract`."),
 
   returns: c.method(functionContract, { resultContract: c.contract}).returns(functionContract)
-    .doc("Returns a contract like `this` that accepts only calls that returns a",
-         "value that passes `resultContract`.")
+    .doc("Returns a function contract like `this` that accepts only calls that returns a",
+         "value that passes `resultContract`."),
+
+  constructs: c.method(functionContract, {fieldContracts: c.hash(c.contract)}).returns(functionContract)
+    .doc("Returns a function contract like `this` that accepts constructor functions.",
+         "The constructor function's `prototype` field will be checked according to the",
+         "`fieldContracts`. Its result will be check against any contract set with `returns`",
+         "whether the contract returns it explicitly with `return` or only mutates",
+         "its given `this` object.")
+
   }).rename('functionContract')
     .doc("Contracts on functions have three extra methods."));
 
@@ -144,15 +151,6 @@ var contracts = {
          "If `data` does not contains any function contracts (nor any custom contract types that require wrapping),",
          "`wrap` returns `data` unchanged. Otherwise, it returns `data` wrapped with the machinery",
          "necessary for further contract checking."),
-
-  wrapConstructor: c.fun({constructor: c.anyFunction},
-                         {argContracts: c.array(c.hash(c.contract))},
-                         {fieldContracts: c.hash(c.contract)})
-    .returns(c.anyFunction)
-    .doc("Takes a constructor function that is equipped with a `prototype` field and returns a",
-         "function that (1) checks its input according to the `argContracts` (2) has its `prototype`",
-         "wrapped according to the `fieldContracts` and (3) has a `prototype.constructor` field",
-         "pointing to itself"),
 
   optional: c.fun({contract: c.contract}).returns(contractObject)
     .doc("Returns an optional version of `contract`. It will accept all falsy values in",
@@ -208,13 +206,15 @@ var contracts = {
   date: c.contract
     .doc("Accepts `Date`"),
 
+  error: c.contract
+    .doc("Accepts `Error`"),
+
   anyFunction: c.contract
     .doc("Accepts any function. To put contract on the argument and return",
          "value, use `fn`, `fun`, or `method`."),
 
-  isA: c.fun({parent: c.any}, {name: c.string}).returns(contractObject)
-    .doc("Accepts only values `v` for which `v instanceof parent` returns",
-         "true. `name` is used to describe the contract by `toString` and in error messages."),
+  isA: c.fun({parent: c.any}).returns(contractObject)
+    .doc("Accepts only values `v` for which `v instanceof parent` returns true."),
 
   contract: c.contract
     .doc("Accept contract object and any values which can be promoted to a",

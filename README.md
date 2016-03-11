@@ -25,7 +25,7 @@ Racket-style Higher-Order Contracts in Plain JavaScript
 [Wrapping vs Checking](#wrap-vs-check)  
 [Object Contracts](#objects)  
 [A Lightweight Notation](#lightweight)  
-[Contracts on Constructors](#constructors)  
+[Contracts on Prototypes and Constructors](#constructors)  
 [Undocumented Functionality](#undocumented)  
 [Related Work](#related)  
 [License](#license)  
@@ -180,7 +180,7 @@ the implementation of `derive`. But that is incorrect. The error is not that
 `derive` assigned a wrong value to the `result_from_fn` variable. Rather, `fn`
 broke its contract -- or more precisely, the module calling `derive` was
 contractually required to provide a function that would only return numbers when
-called, but it failed to abide to its responsibility. The error message should
+called, but it failed to abide its responsibility. The error message should
 make it clear that the failure comes from `fn`, not from `derive`. `rho-contracts.js`'s
 error messages do indeed makes this clear. The error printed is:
 
@@ -193,7 +193,7 @@ ICFP 2002.  The paper formalizes the notion of blame, describes the
 blame-tracking algorithm necessary to report blame correctly, and proves the
 algorithm correct.
 
-This implementation follows the paper closely, though without Racket's macro
+This implementation follows the paper closely though without Racket's macro
 system it was not possible to implement the report of blame in term of the name
 of the module interacting. `rho-contracts.js` only reports the function names.
 
@@ -333,7 +333,7 @@ be refused outright by most static type systems (that is so awesome.)
 The contract library provides a rich collection of contract function to
 construct sophisticated contracts from simple one, such as:
 
-- `c.or()` : as we just saw, accepts value that passes at least one of the given
+- `c.or()` : as we just saw, accepts values that pass at least one of the given
   contracts.
 
 - `c.and()` : accepts only values that pass all of the given contracts.
@@ -585,7 +585,7 @@ ContractError: Too many arguments, expected at most 1 but got 2
 
 Recall, we cannot tell if a function will be miscalled until it is called, and
 we cannot tell if a function will return a value of the wrong type until it
-tries to return. Thus function contracts cannot be checked without wrapping the
+tries to return. Thus, function contracts cannot be checked without wrapping the
 targeted function with a contract-checking shell. Concretely, this means it is
 an error to call `.check()` on a function contract:
 
@@ -722,7 +722,7 @@ takes the contract on `this` as its first argument:
 However, this attempt fails due to the cyclic reference: the line of code
 defining the contract for animals refers to the contract for animals. When the
 `c.animal` is looked up on the third line the first line has not returned yet,
-so `c.animal` is not defined and the look up returns of `c.animal` returns
+so `c.animal` is not defined and the lookup returns of `c.animal` returns
 `undefined`.
 
 `rho-contracts.js` provides a way to establish this cyclic reference in large part to
@@ -836,49 +836,94 @@ cc.kidPark = toContract({
 
 
 <a name="constructors"/>
-### Contracts on Constructors
+### Contracts on Prototypes and Constructors
 
-Constructors functions are handled specially for three reasons.
-
-* First, though in JavaScript function are objects, `rho-contracts.js`
-enforces a strict distinction in order to provide earlier error
-messages in the common cases. Constructor functions are a notable
-exception.
-* Second, constructor functions occur in the right-hand side
-of the `instanceof` operator. The contract-checking shells introduced
-when checking function contracts could make these tests fail without
-explicit control of when the wrapping occurs.
-* And third, wrapping the methods in the constructor's `prototype`
-field make it possible to share the contract-checking shells across
-instances, thus reducing memory overhead.
-
-Because of this, there is no `constructor` contract. Instead,
-use `wrapConstructor` to wrap a constructor once near its definition
-point, like this.
+To check functions that are intended to be invoked with `new`, aka
+"constructor" functions, use the `constructs` method on function
+contracts.
 
 ```javascript
-  function CounterImpl(x) {
-    this.x = x;
-  }
-  CounterImpl.prototype.inc = function (i) {
-    this.x += i;
-  }
+function CounterImpl(x) {
+  this.x = x;
+  // return this; // return statement omitted
+}
 
-  var Counter = c.wrapConstructor(CounterImpl, [{x: c.number}], {
-    inc: c.fun({i: c.number})
-  });
+CounterImpl.prototype.inc = function (i) {
+  this.x += i;
+}
 
-  var instance = new Counter(5);
-  instance.should.be.instanceof(Counter);
-  instance.x.should.eql(5);
-  instance.inc(2)
-  instance.x.should.eql(7);
+var Counter = c.fun({x: c.number})
+               .constructs({
+                 inc: c.fun({i: c.number})
+               })
+               .returns(c.object({x: c.number}))
+
+var instance = new Counter(5);
+instance.should.have.property('inc')
+instance.should.not.have.ownProperty('inc')
+
+// and also both of these hold:
+instance.should.be.instanceof(Counter);
+instance.should.be.instanceof(CounterImpl);
 ```
 
-The fields specified in the third argument to `wrapConstructor` do not
-need to be comprehensive. Additional fields present in `prototype` are
-copied to the result without check nor wrapping. Notably, this means
-that private methods and fields can be omitted from the contract.
+As expected, the method `inc` placed on `CounterImpl.prototype` is
+present on the instance's prototype chain without occurring on the
+instance itself. Prototype chaining (where one prototype itself is
+receiving methods from its prototype and so forth) also works as
+expected.
+
+The argument to `constructs` specifies the contracts on the
+`prototype` of the function. `constructs` is not strict, in the
+sense that additional fields on the constructor's `prototype`, but not
+present in the contract, will appear on the constructed objects'
+prototype without checks nor wrapping. This means that
+private methods and fields can be omitted from the contract.
+
+Note that that contract-checking shells introduced by rho-contracts
+disturb usages of the `constructor` property. Since the `constructor`
+field of the prototype continue to point to the original unwrapped
+function the equality `new Counter(5).constructor === Counter` no
+longer holds.
+
+
+Though not the best pattern, constructor functions can be wrapped
+normally with function contracts, like this:
+
+```javascript
+function CounterImpl(x) {
+  this.x = x;
+  return this; // see below
+}
+CounterImpl.prototype.inc = function (i) {
+  this.x += i;
+}
+
+var Counter = c.fun({x: c.number})
+    .returns(c.object({
+        inc: c.fun({i: c.number}),
+        x: c.number
+    }))
+    .wrap(CounterImpl);
+
+var instance = new Counter(5);
+instance.x.should.eql(5);
+instance.inc(2)
+instance.x.should.eql(7);
+```
+
+However, this usage has two downsides:
+
+* First, if the constructor function omits `return` and relies on
+  the semantic of `new` invocations to automatically return the newly
+  constructed object, contracts on return values (placed with
+  `returns`) will fail.
+* Second, the common pattern of placing methods on the prototype in
+  order to share them across instances fails to achieve the intended
+  memory savings since every newly constructed instance receives a
+  contract-checking shells for the methods present on the prototype.
+
+The `constructs` method shown above avoids both these problems.
 
 
 
@@ -932,14 +977,14 @@ ICFP 2002.
   specification strings. It suffers from the troubles of externally embedded
   languages, namely that it exists separate from its host language. It support only
   a limited number of basic type (Int, Num, String, Bool, Object, Array) with no
-  possibility of extensions that's available and its type name space is separate
-  from the JavaScript name space and module machinery.
+  possibility of extensions that's available and its type namespace is separate
+  from the JavaScript namespace and module machinery.
 
 
 - [jsContract](http://kinsey.no/blog/index.php/2010/02/03/jscontract-code-contracts-for-javascript/),
   [cerny.js](http://www.cerny-online.com/cerny.js/documentation/guides/contracts),
   are good-old (bad-old?) Eiffel-style contract libraries. True to their Eiffel
-  roots, they require lots of code for little benefit, in particular they cannot
+  roots, they require lots of code for little benefit, in particular, they cannot
   check higher-order functions, cannot separate specification from
   implementation. See Findler and Felleisen for a more thorough comparison.
 
