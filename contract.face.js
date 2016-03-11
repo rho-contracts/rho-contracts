@@ -5,8 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef: true, newcap: true undef: true, strict: true */
-/*global exports, require */
+/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef:true, newcap:true, undef:true, strict:false, node:true */
 
 var __ = require('underscore'); // '__' because node's repl already binds '_'
 var c = require('./contract.impl');
@@ -206,6 +205,9 @@ var contracts = {
 
   date: c.contract
     .doc("Accepts `Date`"),
+
+  error: c.contract
+    .doc("Accepts `Error`"),
 
   anyFunction: c.contract
     .doc("Accepts any function. To put contract on the argument and return",

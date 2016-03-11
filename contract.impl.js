@@ -5,8 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef: true, newcap: true undef: true, strict: true */
-/*global exports, require */
+/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef:true, newcap:true, undef:true, strict:false, node:true, loopfunc:true, latedef:false */
 
 var util = require('util');
 var _ = require('underscore');
@@ -72,55 +71,55 @@ function stringify(v) {
 
 var stackContextItems = {
   argument: function (arg) {
-    return { short: (_.isNumber(arg) ? ".arg("+arg+")" : "."+arg),
-             long: "for the " + (_.isNumber(arg) ? ith(arg) : "`"+arg+"`") + " argument of the call." };
+    return { 'short': (_.isNumber(arg) ? ".arg("+arg+")" : "."+arg),
+             'long': "for the " + (_.isNumber(arg) ? ith(arg) : "`"+arg+"`") + " argument of the call." };
   },
 
-  this: { short: ".this",
-          long: "for this `this` argument of the call."},
+  'this': { 'short': ".this",
+            'long': "for this `this` argument of the call."},
 
-  result: { short: ".result",
-            long: "for the return value of the call." },
+  result: { 'short': ".result",
+            'long': "for the return value of the call." },
 
-  extraArguments: { short: ".extraArguments",
-                    long: "for the extra argument array of the call" },
+  extraArguments: { 'short': ".extraArguments",
+                    'long': "for the extra argument array of the call" },
 
   and: function(i) {
-    return { short: ".and("+i+")",
-             long: "for the " + ith(i) + " branch of the `and` contract" };
+    return { 'short': ".and("+i+")",
+             'long': "for the " + ith(i) + " branch of the `and` contract" };
   },
 
   or: function(i) {
-    return { short: ".or" };
+    return { 'short': ".or" };
   },
 
   arrayItem: function (i) {
-    return { short: "["+i+"]",
-             long: "for the " + ith(i) + " element of the array",
+    return { 'short': "["+i+"]",
+             'long': "for the " + ith(i) + " element of the array",
              i: i };
   },
 
   tupleItem: function (i) {
-    return { short: "["+i+"]",
-             long: "for the " + ith(i) + " element of the tuple" };
+    return { 'short': "["+i+"]",
+             'long': "for the " + ith(i) + " element of the tuple" };
   },
 
   hashItem: function (k) {
-    return { short: "." + k,
-             long: "for the key `" + k + "` of the hash" };
+    return { 'short': "." + k,
+             'long': "for the key `" + k + "` of the hash" };
   },
 
   objectField: function (f) {
-    return { short: "." + f,
-             long: "for the field `" + f + "` of the object" };
+    return { 'short': "." + f,
+             'long': "for the field `" + f + "` of the object" };
   },
 
   protoField: function (f) {
-    return { short: "." + f,
-             long: "for the field `" + f + "` on the prototype" };
+    return { 'short': "." + f,
+             'long': "for the field `" + f + "` on the prototype" };
   },
 
-  silent: { short: "", long: "" } // .silent is special, tested with === in `checkWContext`
+  silent: { 'short': "", 'long': "" } // .silent is special, tested with === in `checkWContext`
 
 };
 
@@ -132,10 +131,10 @@ var stackContextItems = {
 var errorMessageInspectionDepth = 5;
 exports.setErrorMessageInspectionDepth = function(depth) {
   errorMessageInspectionDepth = depth;
-}
+};
 
 function cleanStack(stack) {
-  var stack = clone(stack);
+  stack = clone(stack);
   stack.shift();
   var irrelevantFileNames = [ /\/contract.face.js$/, /\/contract.impl.js$/, /rho-contracts.js\/index.js$/, /\/underscore.js$/,
                               /^native array.js$/, /^module.js$/, /^native messages.js$/, /^undefined$/ ];
@@ -158,7 +157,7 @@ function prettyPrintStack(stack) {
   return _.map(stack, function(callsite) {
     return "  at " + callsite.getFunctionName() +
           " (" + callsite.getFileName() + ":" + callsite.getLineNumber() + ":" + callsite.getColumnNumber() + ")";
-  }).join('\n')
+  }).join('\n');
 }
 
 function ContractError(/*opt*/ context, /*opt*/ msg) {
@@ -184,7 +183,7 @@ ContractError.prototype = _.extend(Object.create(Error.prototype), {
 
   captureCleanStack: function () {
     var self = this;
-    self.renderedStack = prettyPrintStack(captureCleanStack())
+    self.renderedStack = prettyPrintStack(captureCleanStack());
     Object.defineProperty(self, 'stack', {
       get: function () {
         return this.name + ": " + this.message + "\n" + self.renderedStack;
@@ -244,16 +243,16 @@ ContractError.prototype = _.extend(Object.create(Error.prototype), {
         // Invariant: the immediate context is always a stackContextItems.arrayItem,
         // which always hash a `i` field
 
-        self.message += "for the " + ith(immediateContext.i) + " extra argument of the call.\n"
+        self.message += "for the " + ith(immediateContext.i) + " extra argument of the call.\n";
         stack = stack.slice(0, -2);
 
-      } else if (immediateContext.long) {
-        self.message += immediateContext.long +"\n";
+      } else if (immediateContext['long']) {
+        self.message += immediateContext['long'] +"\n";
         stack = stack.slice(0, -1);
       }
 
       if (!_.isEmpty(stack)) {
-        var stackStrings = _.map(stack, function(i) { return (i.short ? i.short : i); });
+        var stackStrings = _.map(stack, function(i) { return (i['short'] ? i['short'] : i); });
         self.message += ("at position " + stackStrings.join("") +"\n"+
                          "in contract:\n" + self.context.contract.toString() + "\n");
       }
@@ -298,7 +297,7 @@ function checkWContext(contract, data, context) {
       context.fail(new ContractError(context).expected(contract.contractName, data).fullContractAndValue());
     }
     if (contract.needsWrapping && !context.wrapping) {
-      throw new ContractLibraryError("check", context, "This contract requires wrapping. Call wrap() instead and retain the wrapped result.").fullContract()
+      throw new ContractLibraryError("check", context, "This contract requires wrapping. Call wrap() instead and retain the wrapped result.").fullContract();
     }
 
     contract.nestedChecker(data, function(nextContract, nextV, nextContext) {
@@ -341,7 +340,7 @@ function newContext(thingName, data, contract, wrapping) {
            blameMe: true,
            data: data,
            stack: [],
-           fail: function (e) { e.captureCleanStack(); throw e },
+           fail: function (e) { e.captureCleanStack(); throw e; },
            contract: contract,
            wrapping: wrapping };
 }
@@ -542,6 +541,9 @@ var isA = function(parent) {
 };
 exports.isA = isA;
 
+var error = isA(Error);
+exports.error = error;
+
 var contract = pred(function (v) {
   return isContractInstance(v) || _.isArray(v) || !_.isObject(v);
 }).rename('contract');
@@ -585,8 +587,8 @@ exports.silentAnd = silentAnd;
 exports.and = and;
 
 function matches (r) {
-  var name = 'matches('+r+')'
-  return pred(function (v) { return r.test(v); }).rename(name)
+  var name = 'matches('+r+')';
+  return pred(function (v) { return r.test(v); }).rename(name);
 }
 exports.matches = matches;
 
@@ -611,7 +613,7 @@ function or (/* ... */) {
     _(allContracts).each(function (contract) {
       var failed = false;
       if (!success) {
-        context.fail = function (e) { exceptions.push({ c: contract, e: e }); failed = true; }
+        context.fail = function (e) { exceptions.push({ c: contract, e: e }); failed = true; };
         next(contract, data, stackContextItems.silent);
         if (!failed) success =  contract;
       }
@@ -750,7 +752,7 @@ function hash(valueContract) {
   self.valueContract = valueContract;
   self.firstChecker = function (v) {
     return _.isObject(v) && !isContractInstance(v);
-  }
+  };
   self.nestedChecker = function (data, next, context) {
     var self = this;
     _.each(data, function (v, k) {
@@ -774,7 +776,7 @@ exports.hash = hash;
 function object(/*opt*/ fieldContracts) {
   var self = new Contract('object');
   self.fieldContracts = {};
-  _.each(fieldContracts, function(c, k) { self.fieldContracts[k] = _autoToContract(c) });
+  _.each(fieldContracts, function(c, k) { self.fieldContracts[k] = _autoToContract(c); });
 
   self.firstChecker = _.isObject;
   self.nestedChecker = function (data, next, context) {
@@ -884,7 +886,7 @@ function checkOptionalArgumentCount(argumentContracts, extraArgumentContract, ac
 }
 
 function functionName(fn) {
-  var match = fn.toString().match(/function ([^\(]+)/)
+  var match = fn.toString().match(/function ([^\(]+)/);
   if (match) {
     return match[1].trim();
   } else {
@@ -912,7 +914,7 @@ function fnHelper(who, argumentContracts) {
       var contextHere = clone(context);
       contextHere.stack = clone(context.stack);
       contextHere.thingName = self.thingName || contextHere.thingName;
-      var reverseBlame = function(r) { if (r) contextHere.blameMe = !contextHere.blameMe; }
+      var reverseBlame = function(r) { if (r) contextHere.blameMe = !contextHere.blameMe; };
 
       reverseBlame(true);
       checkOptionalArgumentCount(self.argumentContracts, self.extraArgumentContract, arguments, contextHere);
@@ -926,7 +928,7 @@ function fnHelper(who, argumentContracts) {
         return result;
       };
 
-      var wrappedThis = next(self.thisContract, this, stackContextItems.this, true);
+      var wrappedThis = next(self.thisContract, this, stackContextItems['this'], true);
       var wrappedArgs =
         _.map(_.zip(self.argumentContracts, _.toArray(arguments).slice(0, self.argumentContracts.length)), function(pair, i) {
           return next(pair[0], pair[1], stackContextItems.argument(pair[0].thingName ? pair[0].thingName : i), true);
@@ -988,7 +990,7 @@ function fnHelper(who, argumentContracts) {
           var result = self.resultContract.wrap(this, functionName(fn));
           context.stack.pop();
           return result;
-        }
+        };
 
         wrappedFn.prototype = Object.create(fn.prototype);
         Object.defineProperty(wrappedFn.prototype, "constructor" , {
