@@ -211,9 +211,8 @@ var contracts = {
     .doc("Accepts any function. To put contract on the argument and return",
          "value, use `fn`, `fun`, or `method`."),
 
-  isA: c.fun({parent: c.any}, {name: c.string}).returns(contractObject)
-    .doc("Accepts only values `v` for which `v instanceof parent` returns",
-         "true. `name` is used to describe the contract by `toString` and in error messages."),
+  isA: c.fun({parent: c.any}).returns(contractObject)
+    .doc("Accepts only values `v` for which `v instanceof parent` returns true."),
 
   contract: c.contract
     .doc("Accept contract object and any values which can be promoted to a",

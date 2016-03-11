@@ -135,6 +135,17 @@ describe ("Date", function () {
   it ("reject different", function () { (function () { c.date.check(6); }).should.throwContract(); });
 });
 
+describe ('isA', function () {
+  function Example() { }
+  it ("detects a newly constructed object", function () {
+    c.isA(Example).check(new Example()).should.be.ok;
+  });
+
+  it ("rejects different", function () {
+    (function () { c.isA(Example).check(new Date()); } ).should.throwContract(/isA\(Example\)/)
+  });
+});
+
 describe("pred", function () {
   it ("returns a contract", function () { c.pred(function(v) { return false; }).should.instanceof(c.Contract); });
 });
@@ -274,11 +285,18 @@ describe ("constructs", function () {
 
   it ("creates a wrapped object", function () {
     var instance = new Wrapped(5);
-    instance.should.be.instanceof(Wrapped);
     instance.x.should.eql(5);
     instance.inc(2)
     instance.x.should.eql(7);
     instance.constructor.should.eql(Example);
+  })
+
+  it ('allows `instanceof` and `isA` checks', function () {
+    var instance = new Wrapped(5);
+    instance.should.be.instanceof(Wrapped);
+    instance.should.be.instanceof(Example);
+    c.isA(Wrapped).check(instance).should.be.ok;
+    c.isA(Example).check(instance).should.be.ok;
   })
 
   it ("refuses wrong constructor arguments", function () {

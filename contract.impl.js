@@ -536,8 +536,9 @@ exports.date = date;
 var anyFunction = pred(_.isFunction).rename('fun(...)');
 exports.anyFunction = anyFunction;
 
-var isA = function(parent, name) {
-  return pred(function (v) { return v instanceof parent; }).rename('isA('+(name||"...")+')');
+var isA = function(parent) {
+  var name = functionName(parent) || '...';
+  return pred(function (v) { return v instanceof parent; }).rename('isA(' + name + ')');
 };
 exports.isA = isA;
 
