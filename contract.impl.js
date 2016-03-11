@@ -976,8 +976,13 @@ function fnHelper(who, argumentContracts) {
       wrapper: function (fn, next, context) {
         var self = this;
 
+        // Here we are reusing the normal function wrapper function.
+        // In order to do, we disable the `resultContract` since the normal wrapped
+        // does not check results according to constructor-invocation semantics.
+        // The actual result check is done below.
         var wrappedFnWithoutResultCheck = oldWrapper.call(gentleUpdate(self, { resultContract: any }), fn, next, context);
-        var wrappedFn = function (/* ... */) {
+        
+        var WrappedConstructor = function (/* ... */) {
           var contextHere = clone(context);
           contextHere.stack = clone(context.stack);
           contextHere.thingName = self.thingName || contextHere.thingName;
@@ -998,10 +1003,10 @@ function fnHelper(who, argumentContracts) {
           return result;
         };
 
-        wrappedFn.prototype = Object.create(fn.prototype);
+        WrappedConstructor.prototype = Object.create(fn.prototype);
 
         // Recreate the constructor field, cf. https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch5.md
-        Object.defineProperty(wrappedFn.prototype, "constructor" , {
+        Object.defineProperty(WrappedConstructor.prototype, "constructor" , {
           enumerable: false,
           writable: true,
           configurable: true,
@@ -1011,10 +1016,10 @@ function fnHelper(who, argumentContracts) {
         _.each(prototypeFields, function (v, k) {
           var freshContext = _.clone(context);
           freshContext.thingName = k;
-          wrappedFn.prototype[k] = checkWrapWContext(v, wrappedFn.prototype[k], freshContext);
+          WrappedConstructor.prototype[k] = checkWrapWContext(v, WrappedConstructor.prototype[k], freshContext);
         });
 
-        return wrappedFn;
+        return WrappedConstructor;
       }
     });
 

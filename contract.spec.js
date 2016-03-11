@@ -331,8 +331,10 @@ describe ("constructs", function () {
   it ("supports returning explicitly", function () {
     var theReturnValue = {x: 5};
     var Constructor = function () { this.x = 1; return theReturnValue; };
-    var Wrapped = c.fun().returns(c.any).constructs({}).wrap(Constructor);
+    var Wrapped = c.fun().returns(c.object({x: c.number})).constructs({}).wrap(Constructor);
     new Wrapped().should.eql({x: 5});
+    theReturnValue = undefined;
+    new Wrapped().should.eql({x: 1});
     theReturnValue = "foo";
     new Wrapped().should.eql({x: 1});
     theReturnValue = 5;
