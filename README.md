@@ -838,43 +838,8 @@ cc.kidPark = toContract({
 <a name="constructors"/>
 ### Contracts on Prototypes and Constructors
 
-Constructor functions can be wrapped normally with function contracts, like this:
-
-```javascript
-function CounterImpl(x) {
-  this.x = x;
-  return this; // see below
-}
-CounterImpl.prototype.inc = function (i) {
-  this.x += i;
-}
-
-var Counter = c.fun({x: c.number})
-    .returns(c.object({
-        inc: c.fun({i: c.number}),
-        x: c.number
-    }))
-    .wrap(CounterImpl);
-
-var instance = new Counter(5);
-instance.x.should.eql(5);
-instance.inc(2)
-instance.x.should.eql(7);
-```
-
-However, this usage raises two concerns:
-
-* First, if the constructor function omits `return` and relies on
-  the semantic of `new` invocations to automatically return the newly
-  constructed object, contracts on return values (placed with
-  `returns`) will fail.
-* Second, the common pattern of placing methods on the prototype in
-  order to share them across instances fails to achieve the intended
-  memory savings since every newly constructed instance receives a
-  contract-checking shells for the methods present on the prototype.
-
-
-To avoid these issues, use the `constructs` method on function
+To check functions that are intended to be invoked with `new`, aka
+"constructor" functions, use the `constructs` method on function
 contracts.
 
 ```javascript
@@ -920,6 +885,46 @@ disturb usages of the `constructor` property. Since the `constructor`
 field of the prototype continue to point to the original unwrapped
 function the equality `new Counter(5).constructor === Counter` no
 longer holds.
+
+
+Though not the best pattern, constructor functions can be wrapped
+normally with function contracts, like this:
+
+```javascript
+function CounterImpl(x) {
+  this.x = x;
+  return this; // see below
+}
+CounterImpl.prototype.inc = function (i) {
+  this.x += i;
+}
+
+var Counter = c.fun({x: c.number})
+    .returns(c.object({
+        inc: c.fun({i: c.number}),
+        x: c.number
+    }))
+    .wrap(CounterImpl);
+
+var instance = new Counter(5);
+instance.x.should.eql(5);
+instance.inc(2)
+instance.x.should.eql(7);
+```
+
+However, this usage has two downsides:
+
+* First, if the constructor function omits `return` and relies on
+  the semantic of `new` invocations to automatically return the newly
+  constructed object, contracts on return values (placed with
+  `returns`) will fail.
+* Second, the common pattern of placing methods on the prototype in
+  order to share them across instances fails to achieve the intended
+  memory savings since every newly constructed instance receives a
+  contract-checking shells for the methods present on the prototype.
+
+The `constructs` method shown above avoids both these problems.
+
 
 
 <a name="undocumented"/>
