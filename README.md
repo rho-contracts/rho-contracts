@@ -883,6 +883,10 @@ function CounterImpl(x) {
   // return this; // return statement omitted
 }
 
+CounterImpl.prototype.inc = function (i) {
+  this.x += i;
+}
+
 var Counter = c.fun({x: c.number})
                .constructs({
                  inc: c.fun({i: c.number})
@@ -894,11 +898,17 @@ instance.should.have.property('inc')
 instance.should.not.have.ownProperty('inc')
 ```
 
+As expected, the method `inc` placed on `CounterImpl.prototype` is
+present on the instance's prototype chain without occurring on the
+instance itself. Prototype chaining (where one prototype itself is
+receiving methods from its prototype and so forth) also works as
+expected.
+
 The argument to `constructs` specifies the contracts on the
 `prototype` of the function. `constructs` is not strict, in the
 sense that additional fields on the constructor's `prototype`, but not
 present in the contract, will appear on the constructed objects'
-prototype without checks nor wrapping. Notably, this means that
+prototype without checks nor wrapping. This means that
 private methods and fields can be omitted from the contract.
 
 Note that that contract-checking shells introduced by rho-contracts

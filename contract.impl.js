@@ -114,11 +114,6 @@ var stackContextItems = {
              'long': "for the field `" + f + "` of the object" };
   },
 
-  protoField: function (f) {
-    return { 'short': "." + f,
-             'long': "for the field `" + f + "` on the prototype" };
-  },
-
   silent: { 'short': "", 'long': "" } // .silent is special, tested with === in `checkWContext`
 
 };
@@ -938,7 +933,6 @@ function fnHelper(who, argumentContracts) {
                             stackContextItems.extraArguments, true));
 
       var result = fn.apply(wrappedThis, wrappedArgs.concat(extraArgs));
-      self.resultContract.firstChecker(result);
       return next(self.resultContract, result, stackContextItems.result, false);
     };
 
@@ -973,8 +967,8 @@ function fnHelper(who, argumentContracts) {
         if (missing.length) {
           throw new ContractLibraryError
           ('constructs', false,
-           util.format("Some fields present %s prototype contract are missing on the prototype: %s",
-                       self.thingName ? util.format("in %s's", self.thingName) : "in the",
+           util.format("Some fields present in %s prototype contract are missing on the prototype: %s",
+                       self.thingName ? util.format("%s's", self.thingName) : "the",
                        missing.join(', ')));
         }
       },
@@ -985,14 +979,17 @@ function fnHelper(who, argumentContracts) {
         var wrappedFnWithoutResultCheck = oldWrapper.call(gentleUpdate(self, { resultContract: any }), fn, next, context);
 
         var wrappedFn = function (/* ... */) {
-          wrappedFnWithoutResultCheck.apply(this, arguments);
+          var receivedResult = wrappedFnWithoutResultCheck.apply(this, arguments);
           context.stack.push(stackContextItems.result);
-          var result = self.resultContract.wrap(this, functionName(fn));
+          var resultToCheck = receivedResult || this;
+          var result = self.resultContract.wrap(resultToCheck, functionName(fn));
           context.stack.pop();
-          return result;
+          return resultToCheck;
         };
 
         wrappedFn.prototype = Object.create(fn.prototype);
+
+        // Recreate the constructor field, cf. https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch5.md
         Object.defineProperty(wrappedFn.prototype, "constructor" , {
           enumerable: false,
           writable: true,
@@ -1000,13 +997,11 @@ function fnHelper(who, argumentContracts) {
           value: fn
         });
 
-        for (var k in fn.prototype) {
-          if (_.has(prototypeFields, k)) {
-            // Calling `wrap` here instead of `next` in order to get a fresh
-            // context with a fresh `thingName`.
-            wrappedFn.prototype[k] = prototypeFields[k].wrap(wrappedFn.prototype[k], k);
-          }
-        }
+        _.each(prototypeFields, function (v, k) {
+          // Calling `wrap` here instead of `next` in order to get a fresh
+          // context with a fresh `thingName`.
+          wrappedFn.prototype[k] = v.wrap(wrappedFn.prototype[k], k);
+        });
 
         return wrappedFn;
       }

@@ -136,13 +136,13 @@ describe ("Date", function () {
 });
 
 describe ('isA', function () {
-  function Example() { }
+  function ExampleImpl() { }
   it ("detects a newly constructed object", function () {
-    c.isA(Example).check(new Example()).should.be.ok;
+    c.isA(ExampleImpl).check(new ExampleImpl()).should.be.ok;
   });
 
   it ("rejects different", function () {
-    (function () { c.isA(Example).check(new Date()); } ).should.throwContract(/isA\(Example\)/);
+    (function () { c.isA(ExampleImpl).check(new Date()); } ).should.throwContract(/isA\(ExampleImpl\)/);
   });
 });
 
@@ -269,52 +269,52 @@ describe ("strict", function () {
 
 describe ("constructs", function () {
 
-  function Example(x) {
+  function ExampleImpl(x) {
     this.x = x;
   }
-  Example.prototype.inc = function (i) {
+  ExampleImpl.prototype.inc = function (i) {
     this.x += i;
   };
-  Example.prototype._dec = function (i) {
+  ExampleImpl.prototype._dec = function (i) {
     this.x -= i;
   };
 
-  var Wrapped = c.fun({x: c.number}).constructs({
+  var Example = c.fun({x: c.number}).constructs({
     inc: c.fun({i: c.number})
-  }).wrap(Example);
+  }).wrap(ExampleImpl);
 
   it ("creates a wrapped object", function () {
-    var instance = new Wrapped(5);
+    var instance = new Example(5);
     instance.x.should.eql(5);
     instance.inc(2);
     instance.x.should.eql(7);
-    instance.constructor.should.eql(Example);
+    instance.constructor.should.eql(ExampleImpl);
   });
 
   it ('allows `instanceof` and `isA` checks', function () {
-    var instance = new Wrapped(5);
-    instance.should.be['instanceof'](Wrapped);
+    var instance = new Example(5);
     instance.should.be['instanceof'](Example);
-    c.isA(Wrapped).check(instance).should.be.ok;
+    instance.should.be['instanceof'](ExampleImpl);
     c.isA(Example).check(instance).should.be.ok;
+    c.isA(ExampleImpl).check(instance).should.be.ok;
   });
 
   it ("refuses wrong constructor arguments", function () {
-    (function () { new Wrapped("boom"); }).should.throwContract(/Example[\s\S]+argument/);
+    (function () { new Example("boom"); }).should.throwContract(/ExampleImpl[\s\S]+argument/);
   });
 
   it ("refuses incorrectly constructed objects", function () {
     var Wrap = c.fun({x: c.number}).constructs({}).returns(c.object({x: c.string}))
-        .wrap(Example);
-    (function () { new Wrap(4); }).should.throwContract(/Example[\s\S]+ string, but got 4/);
+        .wrap(ExampleImpl);
+    (function () { new Wrap(4); }).should.throwContract(/ExampleImpl[\s\S]+ string, but got 4/);
   });
 
   it ("produces an object that fails on bad input", function () {
-    (function () { new Wrapped(5).inc("five"); } ).should.throwContract(/inc()[\s\S]+number/);
+    (function () { new Example(5).inc("five"); } ).should.throwContract(/inc()[\s\S]+number/);
   });
 
   it ("fields omitted from the contract can be used normally", function () {
-    var w = new Wrapped(4);
+    var w = new Example(4);
     w._dec("twenty");
     isNaN(w.x).should.be.ok;
   });
@@ -327,26 +327,30 @@ describe ("constructs", function () {
       }).wrap(function Blank() {});}).should.throwType(c.privates.ContractLibraryError, /are missing[\s\S]+inc, _dec/);
   });
 
+  it ("supports returning explicitly", function () {
+    var Constructor = function () { return 5; };
+    c.fun().returns(c.number).constructs({}).wrap(Constructor)().should.eql(5);
+  })
+
   describe("in the presence of the prototype chain", function (){
 
-    function SubExample(x) {
-      Example.call(this, x);
+    function SubExampleImpl(x) {
+      ExampleImpl.call(this, x);
     }
-    SubExample.prototype = Object.create(Example.prototype);
-    SubExample.prototype.pair = function (n) {
+    SubExampleImpl.prototype = Object.create(Example.prototype);
+    SubExampleImpl.prototype.pair = function (n) {
       return [this.x, this.x];
     };
-    SubExample.prototype.reset = function () {
+    SubExampleImpl.prototype.reset = function () {
       this.x = 0;
     };
 
-    var WrappedSubExample = c.fun({i: c.number}).constructs({
-      inc: c.fun({i: c.number}),
+    var SubExample = c.fun({i: c.number}).constructs({
       pair: c.fun().returns(c.array(c.number))
-    }).wrap(SubExample);
+    }).wrap(SubExampleImpl);
 
     it ("produces a usable object with shared methods", function () {
-      var instance = new WrappedSubExample(10);
+      var instance = new SubExample(10);
       instance.should.have.property('pair');
       instance.should.not.have.ownProperty('pair');
       instance.should.have.property('inc');
@@ -354,17 +358,17 @@ describe ("constructs", function () {
       instance.pair().should.eql([10, 10]);
     });
     it ("allows use of methods from up the chain" , function () {
-      var instance = new WrappedSubExample(10);
+      var instance = new SubExample(10);
       instance.inc(2);
       instance.x.should.eql(12);
     });
     it ("it detects misuses of methods from up the chain", function () {
-      var instance = new WrappedSubExample(10);
+      var instance = new SubExample(10);
       (function () { instance.inc("nope"); }).should.throwContract(/number.*nope/);
       (function () { instance.pair(20); }).should.throwContract(/Wrong number of arg/);
     });
     it ("methods up the chain omitted from the contract can be used normally", function () {
-      var instance = new WrappedSubExample(10);
+      var instance = new SubExample(10);
       instance._dec(3);
       instance.x.should.eql(7);
     });
