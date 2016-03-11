@@ -896,6 +896,10 @@ var Counter = c.fun({x: c.number})
 var instance = new Counter(5);
 instance.should.have.property('inc')
 instance.should.not.have.ownProperty('inc')
+
+// and also both of these hold:
+instance.should.be.instanceof(Counter);
+instance.should.be.instanceof(CounterImpl);
 ```
 
 As expected, the method `inc` placed on `CounterImpl.prototype` is

@@ -121,12 +121,12 @@ functionContract.closeCycle(
     .doc("Returns a function contract like `this` that accepts only calls that returns a",
          "value that passes `resultContract`."),
 
-    constructs: c.method(functionContract, {fieldContracts: c.hash(c.contract)}).returns(functionContract)
-      .doc("Returns a function contract like `this` that accepts constructor functions.",
-           "The constructor function's `prototype` field will be checked according to the",
-           "`fieldContracts`. Its result will be check against any contract set with `returns`",
-           "whether the contract returns it explicitly with `return` or only mutates",
-           "its given `this` object.")
+  constructs: c.method(functionContract, {fieldContracts: c.hash(c.contract)}).returns(functionContract)
+    .doc("Returns a function contract like `this` that accepts constructor functions.",
+         "The constructor function's `prototype` field will be checked according to the",
+         "`fieldContracts`. Its result will be check against any contract set with `returns`",
+         "whether the contract returns it explicitly with `return` or only mutates",
+         "its given `this` object.")
 
   }).rename('functionContract')
     .doc("Contracts on functions have three extra methods."));
