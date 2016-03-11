@@ -838,7 +838,7 @@ cc.kidPark = toContract({
 <a name="constructors"/>
 ### Contracts on Prototypes and Constructors
 
-Constructors function can be wrapped normally with functions contracts, like this:
+Constructor functions can be wrapped normally with function contracts, like this:
 
 ```javascript
 function CounterImpl(x) {
