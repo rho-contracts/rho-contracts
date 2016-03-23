@@ -850,17 +850,18 @@ function CounterImpl(x) {
 
 CounterImpl.prototype.inc = function (i) {
   this.x += i;
-}
+};
 
 var Counter = c.fun({x: c.number})
                .constructs({
                  inc: c.fun({i: c.number})
                })
                .returns(c.object({x: c.number}))
+               .wrap(CounterImpl);
 
 var instance = new Counter(5);
-instance.should.have.property('inc')
-instance.should.not.have.ownProperty('inc')
+instance.should.have.property('inc');
+instance.should.not.have.ownProperty('inc');
 
 // and also both of these hold:
 instance.should.be.instanceof(Counter);
@@ -895,9 +896,10 @@ function CounterImpl(x) {
   this.x = x;
   return this; // see below
 }
+
 CounterImpl.prototype.inc = function (i) {
   this.x += i;
-}
+};
 
 var Counter = c.fun({x: c.number})
     .returns(c.object({
@@ -908,7 +910,7 @@ var Counter = c.fun({x: c.number})
 
 var instance = new Counter(5);
 instance.x.should.eql(5);
-instance.inc(2)
+instance.inc(2);
 instance.x.should.eql(7);
 ```
 
