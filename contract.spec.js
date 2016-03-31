@@ -265,6 +265,18 @@ describe ("strict", function () {
   it ("fails an object, multiple", function () { (function () { c.object({x: c.value(10)}).strict().check({x: 10, y:20, z:30}); }).should.throwContract(); });
   it ("fails a nested object", function () { (function () { c.object({x: c.object({y: c.value(10)}).strict() }).strict().check({x: {y: 10, z: 20}}); }).should.throwContract(); });
   it ("fails a tuple", function () { (function () { c.tuple(c.value(10)).strict().check([10, 20]); }).should.throwContract(); });
+
+  it ("composes with extend", function () {
+    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5})}).should.throwContract(/required/);
+    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 'asd'})}).should.throwContract();
+    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 6})}).should.ok;
+    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 6, z: 7})}).should.throwContract(/extra field/);
+
+    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5})}).should.throwContract(/required/);
+    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 'asd'})}).should.throwContract();
+    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 6})}).should.ok;
+    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 6, z: 7})}).should.throwContract(/extra field/);
+  })
 });
 
 
@@ -388,7 +400,7 @@ describe ("constructs", function () {
     var theContract = c.fun({x: c.object({
       BuildIt: c.fn().constructs({
         inc: c.fun({i: c.any}).returns(c.number)
-      }).returns(c.object())        
+      }).returns(c.object())
     })}, {v: c.any});
 
     var theFunction = function (x, v) {
@@ -404,7 +416,7 @@ describe ("constructs", function () {
     };
 
     var theObject = {BuildIt: TheConstructor};
-    
+
     it ('produces a usable object', function () {
       wrapped(theObject, 10).should.be.eql(11);
     });
@@ -412,16 +424,16 @@ describe ("constructs", function () {
     it ('detects misuses', function () {
       (function () { wrapped(theObject, "ten"); }).should.throwContract(/inc[\s\S]+return value of the call/);
     });
-    
+
     it ('produces a short stack context on prototype function calls', function () {
       try {
-        wrapped(theObject, "ten");        
+        wrapped(theObject, "ten");
       } catch (e) {
         e.message.should.not.match(/at position/);
       }
     });
     it ('the truncated context retains the original wrap location', function () {
-      var index = 
+      var index =
           __.findIndex(fs.readFileSync('./contract.spec.js').toString().split('\n'),
                        function (line) { return line.match(/theContract.wrap\(theFunction\)/); });
       var expected = new RegExp('contract was wrapped at: .*/contract.spec.js:'+(index+1));
