@@ -223,12 +223,18 @@ describe ("object", function () {
   it ("fails missing field", function () { (function () { c.object({x: c.value(5), y:c.value(10)}).check({ x: 5, z: 10}); }).should.throwContract(); });
   it ("fails missing field, nested", function () { (function () { c.object({x: c.object({y: c.value(5)})}).check({x: { z: 10}}); }).should.throwContract(); });
 
-  it ("optional field missing", function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({x: 5}).should.ok; });
-  it ("optional field, passing", function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({x: 5, y:10}).should.ok; });
-  it ("optional field, failing", function () { (function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({ x: 5, y:5}); }).should.throwContract(); });
-  it ("optional field, nested, failing", function () { (function () { c.object({x: c.value(5), y: c.optional(c.object({z: c.value(10)}))})
-                                                                      .check({x: 5, y:{z: 0}}); })
-                                                       .should.throwContract(); });
+  describe ("option field", function () {
+    it ("when missing", function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({x: 5}).should.ok; });
+    it ("when null", function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({x: 5, y: null}).should.ok; });
+    it ("when undefined", function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({x: 5, y: undefined}).should.ok; });
+    it ("when present", function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({x: 5, y:10}).should.ok; });
+    it ("rejects when mismatched", function () { (function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({ x: 5, y:5}); }).should.throwContract(); });
+    it ("rejects when falsy", function () { (function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({ x: 5, y:""}); }).should.throwContract(); });
+    it ("rejects when NaN", function () { (function () { c.object({x: c.value(5), y:c.optional(c.value(10))}).check({ x: 5, y:0/0}); }).should.throwContract(); });
+    it ("nested and mismatched", function () { (function () { c.object({x: c.value(5), y: c.optional(c.object({z: c.value(10)}))})
+                                                              .check({x: 5, y:{z: 0}}); })
+                                               .should.throwContract(); });
+  });
 
   it ("extra fields, passing", function () { c.object({x: c.value(5)}).check({x:5, y:10}).should.eql({x:5, y:10}); });
   it ("extra fields, wrapping", function () { c.object({fn: c.fn()}).wrap({fn: function () {}, x: 5}).x.should.eql(5); });

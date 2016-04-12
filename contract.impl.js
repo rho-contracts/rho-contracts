@@ -285,7 +285,7 @@ exports.ContractLibraryError = ContractLibraryError;
 //
 
 function checkWContext(contract, data, context) {
-  if (contract.isOptional && !data) {
+  if (contract.isOptional && isMissing(data)) {
     // ok
   } else {
     if (!contract.firstChecker(data)) {
@@ -304,7 +304,7 @@ function checkWContext(contract, data, context) {
 }
 
 function wrapWContext(contract, data, context) {
-  if (contract.isOptional && !data) {
+  if (contract.isOptional && isMissing(data)) {
     return data;
   } else {
     return contract.wrapper(data, function (nextContract, nextV, nextContext) {
@@ -981,7 +981,7 @@ function fnHelper(who, argumentContracts) {
         // does not check results according to constructor-invocation semantics.
         // The actual result check is done below.
         var wrappedFnWithoutResultCheck = oldWrapper.call(gentleUpdate(self, { resultContract: any }), fn, next, context);
-        
+
         var WrappedConstructor = function (/* ... */) {
           var contextHere = clone(context);
           contextHere.stack = clone(context.stack);
@@ -994,7 +994,7 @@ function fnHelper(who, argumentContracts) {
           // cf. http://stackoverflow.com/a/1978474/35902
           var resultToCheck;
           if (_.isObject(receivedResult)) {
-            resultToCheck = receivedResult; 
+            resultToCheck = receivedResult;
           } else {
             resultToCheck = this;
           }
