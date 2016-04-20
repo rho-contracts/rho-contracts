@@ -273,16 +273,16 @@ describe ("strict", function () {
   it ("fails a tuple", function () { (function () { c.tuple(c.value(10)).strict().check([10, 20]); }).should.throwContract(); });
 
   it ("composes with extend", function () {
-    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5})}).should.throwContract(/required/);
-    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 'asd'})}).should.throwContract();
-    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 6})}).should.ok;
-    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 6, z: 7})}).should.throwContract(/extra field/);
+    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5}); }).should.throwContract(/required/);
+    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 'asd'}); }).should.throwContract();
+    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 6}); }).should.ok;
+    (function () { c.object({x: c.number}).strict().extend({y: c.number}).check({x: 5, y: 6, z: 7}); }).should.throwContract(/extra field/);
 
-    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5})}).should.throwContract(/required/);
-    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 'asd'})}).should.throwContract();
-    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 6})}).should.ok;
-    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 6, z: 7})}).should.throwContract(/extra field/);
-  })
+    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5}); }).should.throwContract(/required/);
+    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 'asd'}); }).should.throwContract();
+    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 6}); }).should.ok;
+    (function () { c.object({x: c.number}).extend({y: c.number}).strict().check({x: 5, y: 6, z: 7}); }).should.throwContract(/extra field/);
+  });
 });
 
 
@@ -399,7 +399,18 @@ describe ("constructs", function () {
       instance._dec(3);
       instance.x.should.eql(7);
     });
-
+    it ("check `isA` for the `this` argument", function () {
+      var instance = new SubExample(10);
+      var incFn = instance.inc;
+      (function () { incFn(20); }).should.throwContract(/isA\(ExampleImpl\)[\s\S]+the `this` argument/);
+      (function () { incFn.call(new SubExample(5), 2, 4); }).should.ok;
+      (function () { incFn.call({}, 2); }).should.throwContract(/the `this` argument/);
+    });
+    it ("`isA` checks on subclass refuses superclass", function () {
+      var instance = new SubExample(10);
+      var pairFn = instance.pair;
+      (function () { pairFn.call(new Example(5)); }).should.throwContract(/isA\(SubExampleImpl\)[\s\S]+`this`/);
+    });
   });
 
   describe('when nested inside other contracts', function () {

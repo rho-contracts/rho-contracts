@@ -76,7 +76,7 @@ var stackContextItems = {
   },
 
   'this': { 'short': ".this",
-            'long': "for this `this` argument of the call."},
+            'long': "for the `this` argument of the call."},
 
   result: { 'short': ".result",
             'long': "for the return value of the call." },
@@ -1013,10 +1013,16 @@ function fnHelper(who, argumentContracts) {
           value: fn
         });
 
-        _.each(prototypeFields, function (v, k) {
+        var newThisContract = isA(fn);
+        _.each(prototypeFields, function (c, k) {
           var freshContext = _.clone(context);
           freshContext.thingName = k;
-          WrappedConstructor.prototype[k] = checkWrapWContext(v, WrappedConstructor.prototype[k], freshContext);
+          if (c.thisContract === any) {
+            // Functions with no specified `thisContract` are assumed to be methods
+            // and given a `thisContract`
+            c = gentleUpdate(c, { thisContract: newThisContract });
+          }
+          WrappedConstructor.prototype[k] = checkWrapWContext(c, WrappedConstructor.prototype[k], freshContext);
         });
 
         return WrappedConstructor;
