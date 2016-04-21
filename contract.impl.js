@@ -536,7 +536,7 @@ var isA = function(parent) {
 };
 exports.isA = isA;
 
-var error = isA(Error);
+var error = isA(Error).rename('error');
 exports.error = error;
 
 var contract = pred(function (v) {
