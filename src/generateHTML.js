@@ -136,7 +136,7 @@ function renderModule(name) {
 }
 
 function generateHTML() {
-  fs.readFile('module.mustache', 'ascii', function(err, template) {
+  fs.readFile('resources/module.mustache', 'ascii', function(err, template) {
     if (err) {
       console.error("Could not open file: %s", err);
       process.exit(1);

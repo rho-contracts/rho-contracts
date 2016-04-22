@@ -1,8 +1,0 @@
-== Possibly Bad Error Messages
-
-1. When giving an object contract as an argument to .extend, should complain
-
-2. When refactoring the arguments of a function and forgetting to also rename the arguments in the
-   contract, should complains. Use `function(){}.toString` to discover the declared names of the 
-   function's arguments.
-

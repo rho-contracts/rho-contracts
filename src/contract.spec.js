@@ -451,7 +451,7 @@ describe ("constructs", function () {
     });
     it ('the truncated context retains the original wrap location', function () {
       var index =
-          __.findIndex(fs.readFileSync('./contract.spec.js').toString().split('\n'),
+          __.findIndex(fs.readFileSync('./src/contract.spec.js').toString().split('\n'),
                        function (line) { return line.match(/theContract.wrap\(theFunction\)/); });
       var expected = new RegExp('contract was wrapped at: .*/contract.spec.js:'+(index+1));
       (function () { wrapped(theObject, "ten"); }).should.throwContract(expected);
