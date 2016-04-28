@@ -10,7 +10,7 @@
 var __ = require('underscore');
 var fs = require('fs');
 var m = require("mustache");
-var c = require('./contract.face');
+var c = require('./contract');
 var marked = require('marked');
 
 var moduleTemplateData = {

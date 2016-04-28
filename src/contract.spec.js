@@ -10,8 +10,9 @@
 
 var should = require('should');
 var __ = require('underscore');
-var c = require('./contract.face');
+var c = require('./contract');
 var fs = require('fs');
+var errors = require('./errors');
 
 Array.prototype.toString = function () {
   return "[" + this.join(", ") + "]";
@@ -30,7 +31,7 @@ should.Assertion.prototype.throwError = function (message) {
 };
 
 should.Assertion.prototype.throwContract = function (message) {
-  this.throwType(c.ContractError, message);
+  this.throwType(errors.ContractError, message);
 };
 
 should.Assertion.prototype.throwType = function(type, message){
@@ -343,7 +344,7 @@ describe ("constructs", function () {
       c.fun().constructs({
         inc: c.fun({i: c.number}),
         _dec: c.fun({i: c.number})
-      }).wrap(function Blank() {});}).should.throwType(c.privates.ContractLibraryError, /are missing[\s\S]+inc, _dec/);
+      }).wrap(function Blank() {});}).should.throwType(errors.ContractLibraryError, /are missing[\s\S]+inc, _dec/);
   });
 
   it ("supports returning explicitly", function () {

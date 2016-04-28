@@ -17,6 +17,7 @@ Racket-style Higher-Order Contracts in Plain JavaScript
 [Blame, Blame-correctness, and Blame Tracking](#blame)  
 [Contracts on Functions-as-Values](#functions-as-values)  
 [Tutorial](#tutorial)  
+[Additional Documentation](#tutorial)__
 [Basic Value Contracts](#basic-value)  
 [Storing Custom Contracts](#storing)  
 [Data Structure Contracts](#data-structure)  
@@ -244,10 +245,12 @@ for the `dx` argument of the call.
 <a name="tutorial"/>
 ## Tutorial
 
+### Additional Documentation
+
 *In a delightful instance of self-reference, the contract library is documented
  and checked using the contract library itself. If reading tutorials is not your thing,
  you may want to instead look at the contracts placed on `rho-contracts.js`'s functions
- and methods by reading [`contract.face.js`](https://github.com/sefaira/rho-contracts.js/blob/master/contract.face.js) directly.*
+ and methods by reading [`contract.js`](https://github.com/sefaira/rho-contracts.js/blob/master/src/contract.js) directly.*
 
 The contract library is typically `require`'d and bound to a variable called `c`:
 
@@ -938,30 +941,32 @@ The `constructs` method shown above avoids both these problems.
 
 <a name="undocumented"/>
 
-## Undocumented Functionality ##
+## Functionality in Contract.js ##
 
-Additional functionality that's not documented yet:
+Read about these functions in [`contract.js`](https://github.com/sefaira/rho-contracts.js/blob/master/src/contract.js) directly.
 
-- c.pred
-- forwardRef/setRef
-- Contracts on Whole Modules, `publish()`
+- `c.pred`: construct custom contracts from predicates.
+- `c.forwardRef` and `c.setRef`: the sibblings of `c.cylic`.
+- `publish()`: contracts on whole modules which seals private methods
+- `c.setErrorMessageInspectionDepth`: setting the depth of the data
+  printed in the error messages, which defaults to 5-plys deep.
+- `c.fn()`: a shorter notation for function contracts the omits argument names.
+- `anyFunction`: a contract that accepts any function without wrapping.
+- `isA`: a contract that accepts values that pass an `instanceof` check.
 
-- The partially documented documentation feature:
-- .doc
-- .theDoc
-- documentType
-- documentTable
-- document category
-- document module
+- The documentation feature is best learned by following the example
+  set by [`contract.js`](https://github.com/sefaira/rho-contracts.js/blob/master/src/contract.js):
+- `.doc`
+- `.theDoc`
+- `documentType`
+- `documentTable`
+- `document category`
+- `document module`
 
 And also
 
-- anyFunction
-- isA
-- quacksLike
-- silentAnd
-- `c.fn()`
-- setErrorMessageInspectionDepth
+- `quacksLike`
+- `silentAnd`
 
 
 <a name="related"/>

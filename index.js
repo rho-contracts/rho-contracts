@@ -4,4 +4,4 @@
 
 /*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef: true, newcap: true, undef: true, strict:true, node:true */
 
-module.exports = require('./src/contract.face.js');
+module.exports = require('./src/contract.js');
