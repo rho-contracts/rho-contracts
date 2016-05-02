@@ -321,7 +321,7 @@ exports.and = and;
 
 function matches (r) {
   var name = 'matches('+r+')';
-  return pred(function (v) { return r.test(v); }).rename(name);
+  return pred(function (v) { return _.isString(v) && r.test(v); }).rename(name);
 }
 exports.matches = matches;
 

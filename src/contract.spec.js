@@ -170,6 +170,7 @@ describe ("or", function () {
 describe ("matches", function () {
   it ("passes", function () { c.matches(/x+/).check("---xxxxx  ").should.ok; });
   it ("fail", function () { (function () { c.matches(/x+/).check("---  "); }).should.throwContract(); });
+  it ("does not coerce null", function () { (function () { c.matches(/null/).check(null); }).should.throwContract(); });
 });
 
 describe ("array", function () {
