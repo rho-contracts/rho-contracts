@@ -378,23 +378,20 @@ var contracts = {
          "for `contract.contractName` in `moduleName`. The given contract should have a been given",
          "a unique name, otherwise `documentType` throws an exception."),
 
-  publish: c.fun({ moduleName: c.string }, {self: c.any}, {contracts: c.hash(c.contract)},
-                 { additionalExports: c.optional(c.object()) }
-                )
-    .doc("Returns an object like `self` where each element is wrapped using the",
-         "correspoding contract in `contracts`. Notably, publish hides the elements",
-         "that are not mentionned in the contract, effectively making them private",
+  wrapAll: c.fun({ implementation: c.object() }, { contracts: c.hash(c.contract) })
+    .doc("Returns an object like `implementation` where each element is wrapped using the",
+         "correspoding contract in `contracts`. Notably, `wrapAll` hides the elements",
+         "that are not mentioned in the contract, effectively making them private.",
          "",
-         "`publish` records the names of the items being wrapped in the wrapper. The names",
-         "are then used to produce better error messages when the contracts fail.",
-         "",
-         "`publish` also records the value of the `theDoc` fields of the",
-         "`contracts` in the `documentationTable`.",
-         "`moduleName` specifies which subtable of `documentationTable` to send the",
-         "documentation to.",
-         "",
-         "If `additionalExports` is provided, the keys in the given object",
-         "are copied to the return value."),
+         "`wrapAll` records the names of the items being wrapped in the wrapper. The names",
+         "are then used to produce better error messages when the contracts fail."),
+
+  publish: c.fun({ moduleName: c.string }, { implementation: c.object() }, { contracts: c.hash(c.contract) },
+                 { additionalExports: c.optional(c.object()) })
+    .doc("`publish` does the same wrapping as `wrapAll`, then records any documentation",
+         "placed on the contract into the global `documentationTable` where a documentation",
+         "tool can find them to produce module documentation. The `moduleName` argument",
+         "specifies which subtable of `documentationTable` to send the documentation to."),
 
   documentationTable: c.hash(c.object({ doc: c.array(c.string),
                                         categories: c.array(c.object({name: c.string, doc: c.array(c.string)})),
@@ -410,13 +407,15 @@ var contracts = {
 
 };
 
-module.exports = c.publish(thisModuleName, c, contracts,
-                           {
-                             functionContract: functionContract,
-                             contractObject: contractObject,
-                             strictExtension: strictExtension,
-                             tupleContractObject: tupleContractObject,
-                             objectContractObject: objectContractObject,
-                             Contract: c.Contract,
-                             ContractError: errors.ContractError
-                           });
+module.exports = c.publish(thisModuleName, c, contracts);
+
+_.extend(module.exports,
+         {
+           functionContract: functionContract,
+           contractObject: contractObject,
+           strictExtension: strictExtension,
+           tupleContractObject: tupleContractObject,
+           objectContractObject: objectContractObject,
+           Contract: c.Contract,
+           ContractError: errors.ContractError
+         });

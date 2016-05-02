@@ -675,6 +675,11 @@ function publish(moduleName, self, contracts, /*opt*/ additionalExports) {
 }
 exports.publish = publish;
 
+function wrapAll(self, contracts) {
+  return publish(undefined, self, contracts);
+}
+exports.wrapAll = wrapAll;
+
 exports.c = exports;
 
 collectingBuiltInContractNames = false;
