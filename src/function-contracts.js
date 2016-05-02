@@ -124,7 +124,7 @@ function fnHelper(who, argumentContracts) {
       nestedChecker: function (v) {
         var self = this;
 
-        var missing = _.difference(_.keys(prototypeFields), _.allKeys(v.prototype));
+        var missing = _.difference(_.keys(prototypeFields), Object.getOwnPropertyNames(v.prototype));
         if (missing.length) {
           throw new errors.ContractLibraryError
           ('constructs', false,
@@ -216,19 +216,19 @@ function funHelper(who, argumentContracts) {
     if (!_.isObject(argSpec))
       throw new errors.ContractLibraryError
     (who, false,
-     "expected an object with exactly one field to specify the name of the " +ith(i)+
-     " argument, but got " + stringify(argSpec));
+     "expected an object with exactly one field to specify the name of the " + u.ith(i) +
+     " argument, but got " + u.stringify(argSpec));
 
     if (u.isContractInstance(argSpec))
       throw new errors.ContractLibraryError
     (who, false,
-     "expected a one-field object specifying the name and the contract of the "+ith(i)+
+     "expected a one-field object specifying the name and the contract of the "+ u.ith(i) +
      " argument, but got a contract " + argSpec);
 
     var s = _.size(_.keys(argSpec));
     if (s !== 1)
-      throw new errors.ContractLibraryError(who, false, "expected exactly one key to specify the name of the "+ith(i)+
-                                     " arguments, but got " + stringify(s));
+      throw new errors.ContractLibraryError(who, false, "expected exactly one key to specify the name of the "+ u.ith(i) +
+                                     " arguments, but got " + u.stringify(s));
 
   });
   var contracts = _.map(argumentContracts, function(singleton) {
@@ -266,7 +266,7 @@ exports.fun = fun;
 
 function method(ths /* ... */) {
   if (!u.isContractInstance(ths))
-    throw new errors.ContractLibraryError('method', false, "expected a Contract for the `this` argument, by got " + stringify(ths));
+    throw new errors.ContractLibraryError('method', false, "expected a Contract for the `this` argument, by got " + u.stringify(ths));
   return u.gentleUpdate(funHelper('method', _.toArray(arguments).slice(1)).thisArg(ths),
                       { contractName: 'method' });
 }
