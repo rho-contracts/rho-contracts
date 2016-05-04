@@ -9,7 +9,7 @@
 
 var _ = require('underscore');
 var c = require('./contract.impl');
-var errors = require('./errors');
+var errors = require('./contract-errors');
 
 _.extend(c, require('./function-contracts.js'));
 

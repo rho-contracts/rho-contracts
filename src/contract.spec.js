@@ -12,7 +12,7 @@ var should = require('should');
 var __ = require('underscore');
 var c = require('./contract');
 var fs = require('fs');
-var errors = require('./errors');
+var errors = require('./contract-errors');
 
 Array.prototype.toString = function () {
   return "[" + this.join(", ") + "]";
@@ -345,7 +345,20 @@ describe ("constructs", function () {
       c.fun().constructs({
         inc: c.fun({i: c.number}),
         _dec: c.fun({i: c.number})
-      }).wrap(function Blank() {});}).should.throwType(errors.ContractLibraryError, /are missing[\s\S]+inc, _dec/);
+      }).wrap(function Blank() {});}).should.throwContract(/are missing[\s\S]+inc, _dec/);
+  });
+
+  it ("detects inherited fields", function () {
+    function ChildExampleImpl(x) {
+      ExampleImpl.call(this, x);
+    }
+    ChildExampleImpl.prototype = Object.create(ExampleImpl.prototype);
+
+    c.fun({x: c.number}).constructs({
+        inc: c.fun({i: c.number}),
+        _dec: c.fun({i: c.number})
+    }).wrap(ChildExampleImpl).should.be.ok;
+
   });
 
   it ("supports returning explicitly", function () {

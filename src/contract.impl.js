@@ -10,7 +10,7 @@
 var util = require('util');
 var u = require('./utils');
 var _ = require('underscore');
-var errors = require('./errors');
+var errors = require('./contract-errors');
 
 exports.privates = {};
 

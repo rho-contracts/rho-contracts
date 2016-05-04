@@ -66,7 +66,7 @@ exports.stackContextItems = stackContextItems;
 function cleanStack(stack) {
   stack = u.clone(stack);
   stack.shift();
-  var irrelevantFileNames = [ /\/contract.js$/, /\/contract.impl.js$/, /\/function-contracts.js$/,
+  var irrelevantFileNames = [ /\/contract.js$/, /\/contract.impl.js$/, /\/function-contracts.js$/, /\/contract-errors.js$/,
                               /rho-contracts.js\/index.js$/, /\/underscore.js$/,
                               /^native array.js$/, /^module.js$/, /^native messages.js$/, /^undefined$/ ];
   while(!_.isEmpty(stack)) {

@@ -11,7 +11,7 @@ var util = require('util');
 var _ = require('underscore');
 var u = require('./utils');
 var c = require('./contract.impl');
-var errors = require('./errors');
+var errors = require('./contract-errors');
 
 function checkOptionalArgumentFormals(who, argumentContracts) {
   var optionsOnly = false;
@@ -121,16 +121,23 @@ function fnHelper(who, argumentContracts) {
 
     return u.gentleUpdate(self, {
 
-      nestedChecker: function (v) {
+      nestedChecker: function (data, next, context) {
         var self = this;
 
-        var missing = _.difference(_.keys(prototypeFields), Object.getOwnPropertyNames(v.prototype));
+        var missing = [];
+        for(var k in prototypeFields) {
+            if (data.prototype[k] === undefined) {
+                missing.push(k);
+            }
+        }
+
         if (missing.length) {
-          throw new errors.ContractLibraryError
-          ('constructs', false,
-           util.format("Some fields present in %s prototype contract are missing on the prototype: %s",
-                       self.thingName ? util.format("%s's", self.thingName) : "the",
-                       missing.join(', ')));
+          var msg =
+              util.format("constructs: some fields present in %s prototype contract are missing on the prototype: %s",
+                          self.thingName ? util.format("%s's", self.thingName) : "the",
+                          missing.join(', '));
+
+          context.fail(new errors.ContractError(context, msg).fullContract());
         }
       },
 
