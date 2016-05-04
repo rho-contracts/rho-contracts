@@ -82,7 +82,6 @@ function cleanStack(stack) {
 function captureCleanStack() {
   var stack;
 
-  // TODO: Create a better fallback implementation
   // callsite depends on v8 engine, not available in all browsers
   if(!!Error.captureStackTrace){
     stack = require('callsite')();
