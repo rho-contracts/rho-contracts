@@ -1,5 +1,5 @@
 {
-  "name": "rho-contracts",
+  "name": "rho-contracts-fork",
   "version": "1.2.2",
   "description": "Racket-style Higher Order Contracts in Plain Javascript",
   "main": "index.js",
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bodylabs/rho-contracts.js.git"
+    "url": "https://github.com/bodylabs/rho-contracts-fork.git"
   },
   "readmeFilename": "README.md",
   "gitHead": "aef2505b61452b8322c0d5ec57144190ac09f175",
