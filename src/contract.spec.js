@@ -250,8 +250,8 @@ describe ("object", function () {
 
   it ("wrap maintains prototypes", function () {
     var x = {thk:function(){}};
-    x.__proto__.x = 5;
-    c.object({thk:c.fn()}).wrap(x).__proto__.should.eql({x:5});
+    Object.getPrototypeOf(x).x = 5;
+    Object.getPrototypeOf(c.object({thk:c.fn()}).wrap(x)).should.eql({x:5});
   });
 
   it ("extends passes", function () {
@@ -312,14 +312,6 @@ describe ("constructs", function () {
     instance.constructor.should.eql(ExampleImpl);
   });
 
-  it ('allows `instanceof` and `isA` checks', function () {
-    var instance = new Example(5);
-    instance.should.be['instanceof'](Example);
-    instance.should.be['instanceof'](ExampleImpl);
-    c.isA(Example).check(instance).should.be.ok;
-    c.isA(ExampleImpl).check(instance).should.be.ok;
-  });
-
   it ("refuses wrong constructor arguments", function () {
     (function () { new Example("boom"); }).should.throwContract(/ExampleImpl[\s\S]+argument/);
   });
@@ -359,6 +351,18 @@ describe ("constructs", function () {
         _dec: c.fun({i: c.number})
     }).wrap(ChildExampleImpl).should.be.ok;
 
+  });
+
+  it('allows `instanceof` and `isA` checks on the wrapped constructor', function () {
+    var instance = new Example(5);
+    instance.should.be['instanceof'](Example);
+    c.isA(Example).check(instance).should.be.ok;
+  });
+
+  it('allows `instanceof` and `isA` checks on the implementation', function () {
+    var instance = new Example(5);
+    instance.should.be['instanceof'](ExampleImpl);
+    c.isA(ExampleImpl).check(instance).should.be.ok;
   });
 
   it ("supports returning explicitly", function () {

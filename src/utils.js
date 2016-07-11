@@ -21,9 +21,9 @@ function isMissing(v) {
 }
 
 function clone(obj) {
-  var other = _.clone(obj);
-  other.__proto__ = obj.__proto__;
-  return other;
+    var other = _.clone(obj)
+    Object.setPrototypeOf(other, Object.getPrototypeOf(obj))
+    return other;
 }
 
 function gentleUpdate(obj, spec) { // aka, not an imperative update. aka, no bang.
@@ -46,7 +46,7 @@ var errorMessageInspectionDepth = 5;
 
 function setErrorMessageInspectionDepth(depth) {
   errorMessageInspectionDepth = depth;
-};
+}
 
 function stringify(v) {
   if (isContractInstance(v)) {
@@ -64,7 +64,7 @@ function functionName(fn) {
     } else {
         return null;
     }
-};
+}
 
 module.exports = {
     contractSignal: contractSignal,

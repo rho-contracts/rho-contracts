@@ -27,7 +27,7 @@
     "url": "https://github.com/bodylabs/rho-contracts.js/issues"
   },
   "scripts": {
-    "test": "mocha src",
+    "test": "mocha src/*.spec.js",
     "lint": "jshint *.js"
   },
   "author": "Guillaume Marceau <guillaume.marceau@bodylabs.com> (http://bodylabs.com/)",

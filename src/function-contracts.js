@@ -141,59 +141,137 @@ function fnHelper(who, argumentContracts) {
         }
       },
 
-      wrapper: function (fn, next, context) {
+      wrapper: function (Constructor, next, context) {
         var self = this;
 
-        // Here we are reusing the normal function wrapper function.
-        // In order to do, we disable the `resultContract` since the normal wrapped
-        // does not check results according to constructor-invocation semantics.
-        // The actual result check is done below.
-        var wrappedFnWithoutResultCheck = oldWrapper.call(u.gentleUpdate(self, { resultContract: c.any }), fn, next, context);
+        //
+        // ES6 requires `new` when invoking constructors, but there is no direct way to
+        // splat an argument array when invoking with `new`. This is a workaround.
+        // cf. http://stackoverflow.com/a/8843181/35902
+        //
+        // `forceNewInvoke` returns a function which, when invoked as `result(1, 2, 3)`
+        // forwards its arguments to `fn` with `new`, aka `new fn(1, 2, 3)`
+        //
+        // This restriction will introduce an additional
+        // complication. ES6 forces the prototype chain of the created
+        // object to that of the _unwrapped_ function, whereas we need
+        // it to be set to the prototype of the _wrapped_ function.
+        //
+        // This is addressed with `setPrototypeOf` below. A solution
+        // without `setPrototypeOf` is possible using ES6's `class`
+        // and `super` keywords.
+        //
+        var forceNewInvoke = function (fn) {
+          return function (/* ... */) {
+            var ReadyToNew = Function.prototype.bind.apply(fn, [null].concat(_.toArray(arguments)));
+            return new ReadyToNew();
+          }
+        };
 
-        var WrappedConstructor = function (/* ... */) {
+        // Checking the input-output behavior of `Constructor` takes
+        // three steps.
+        //
+        // First we reuse the normal function contract's mechanics to
+        // check the inputs.
+        //
+        // Second, we check the return value according to the
+        // constructor-invocation semantics, which has an odd
+        // corner cases.  cf. http://stackoverflow.com/a/1978474/35902
+        //
+        //
+        // Finally, we ensure that `instanceof` checks works when invoked
+        // with both the original contructor and with the new
+        // wrapped constructor, which can be acheived by placing both
+        // constructors into prototype chain where the `instanceof`
+        // looks for them. `a instanceof Foo` is defined as
+        //
+        //   in the entire [[Prototype]] chain of `a`, does the object
+        //   arbitrarily pointed to by `Foo.prototype` ever appear?
+        //
+        // cf. https://github.com/getify/You-Dont-Know-JS/blob/master/this%20%26%20object%20prototypes/ch5.md#inspecting-class-relationships
+        //
+        // Graphically, we are constructing this object graph:
+        //
+        //      Constructor         --- .prototype -->   { original methods }
+        //                                                       ^
+        //                                                       |
+        //                                                       | [[Prototype]]
+        //                                                       |
+        //    WrappedConstructor     --- .prototype -->  { wrapped methods }
+        //                                                       ^
+        //                                                       |
+        //                                                       | [[Prototype]]
+        //                                                       |
+        //                                                constructed object
+        var constructorName = u.functionName(Constructor);
+
+        // Wrap the constructor to check the inputs (with result check disabled)
+        var WrappedConstructorNoResultCheck = oldWrapper.call(u.gentleUpdate(self, { resultContract: c.any }),
+                                                              forceNewInvoke(Constructor),
+                                                              next, u.gentleUpdate(context, { thingName: constructorName }));
+
+
+        var WrappedConstructorWithResultCheck = function (/* ... */) {
           var contextHere = u.clone(context);
           contextHere.stack = u.clone(context.stack);
-          contextHere.thingName = self.thingName || contextHere.thingName;
+          contextHere.thingName = self.thingName || contextHere.thingName || constructorName;
 
-          var receivedResult = wrappedFnWithoutResultCheck.apply(this, arguments);
-          contextHere.stack.push(errors.stackContextItems.result);
+          // Then check the result. If the constructors returns a non-object,
+          // that value is ignored and replaced with `this`
+          function checkResult(receivedResult, replacement) {
+            contextHere.stack.push(errors.stackContextItems.result);
 
-          // Constructor semantic according to the JavaScript standard,
-          // cf. http://stackoverflow.com/a/1978474/35902
-          var resultToCheck;
-          if (_.isObject(receivedResult)) {
-            resultToCheck = receivedResult;
-          } else {
-            resultToCheck = this;
+            var resultToCheck;
+            if (_.isObject(receivedResult)) {
+              resultToCheck = receivedResult;
+            } else {
+              resultToCheck = replacement;
+            }
+            var result = c.privates.checkWrapWContext(self.resultContract, resultToCheck, contextHere);
+            contextHere.stack.pop();
+            return result;
           }
-          var result = c.privates.checkWrapWContext(self.resultContract, resultToCheck, contextHere);
-          contextHere.stack.pop();
+
+          var receivedResult = WrappedConstructorNoResultCheck.apply(this, arguments);
+          var result = checkResult(receivedResult, this);
+
+          Object.setPrototypeOf(result, Object.getPrototypeOf(this));
           return result;
         };
 
-        WrappedConstructor.prototype = Object.create(fn.prototype);
 
-        // Recreate the constructor field, cf. https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch5.md
-        Object.defineProperty(WrappedConstructor.prototype, "constructor" , {
+        function wrapMethod(dest, src, name, contract, thisContract) {
+          var freshContext = _.clone(context);
+          freshContext.thingName = name;
+          if (contract.thisContract === c.any) {
+            contract = u.gentleUpdate(contract, { thisContract: thisContract });
+          }
+          dest[name] = c.privates.checkWrapWContext(contract, src[name], freshContext);
+        }
+
+        function wrapAllMethods(dest, src) {
+          // When a function has no specified `thisContract`, we assume
+          // it is a methods and set the  `thisContract` to `c.is(Constructor)`
+          var newThisContract = c.isA(Constructor);
+          _.each(prototypeFields, function (contract, k) {
+            wrapMethod(dest, src, k, contract, newThisContract);
+          });
+        }
+
+        var wrappedMethods = Object.create(Constructor.prototype)
+        wrapAllMethods(wrappedMethods, Constructor.prototype);
+        WrappedConstructorWithResultCheck.prototype = wrappedMethods;
+
+        // Recreate the constructor field,
+        // cf. https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch5.md
+        Object.defineProperty(WrappedConstructorWithResultCheck.prototype, "constructor" , {
           enumerable: false,
           writable: true,
           configurable: true,
-          value: fn
+          value: Constructor
         });
 
-        var newThisContract = c.isA(fn);
-        _.each(prototypeFields, function (contract, k) {
-          var freshContext = _.clone(context);
-          freshContext.thingName = k;
-          if (contract.thisContract === c.any) {
-            // Functions with no specified `thisContract` are assumed to be methods
-            // and given a `thisContract`
-            contract = u.gentleUpdate(contract, { thisContract: newThisContract });
-          }
-          WrappedConstructor.prototype[k] = c.privates.checkWrapWContext(contract, WrappedConstructor.prototype[k], freshContext);
-        });
-
-        return WrappedConstructor;
+        return WrappedConstructorWithResultCheck;
       }
     });
 
