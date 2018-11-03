@@ -14,7 +14,7 @@
     "jshint": "^2.9.1",
     "marked": "^0.3.5",
     "mocha": "1.14.x",
-    "mustache": "0.7.x",
+    "mustache": "^3.0.0",
     "should": "1.2.2"
   },
   "repository": {
