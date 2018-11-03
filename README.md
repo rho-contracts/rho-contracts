@@ -1,10 +1,6 @@
--------------------------------------------------------------------------------
-
 <!--- This Source Code Form is subject to the terms of the Mozilla Public
     - License, v. 2.0. If a copy of the MPL was not distributed with this
     - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-
-
 
 rho-contracts-fork
 ==================
@@ -48,11 +44,13 @@ rho-contracts' maintenance and development, notably
 
 
 <a name="installation"/>
+
 ## Installation
 
 `npm install rho-contracts-fork`
 
 <a name="introduction"/>
+
 ## Introduction
 
 *(scroll down to* Tutorial *to skip the intro)*
@@ -79,6 +77,7 @@ notice. When I couldn't stand it anymore, I wrote this contract library.
 
 
 <a name="runtime"/>
+
 ### Run-time vs Compile-time
 
 `rho-contracts.js` is purely a run-time checker. It will never give a compile-time
@@ -88,6 +87,7 @@ system, and whose checking discipline is sufficiently strict to provide similar
 guarantees as a type system (though not the same.)
 
 <a name="higher-order"/>
+
 ### Higher-order contracts
 
 `rho-contracts.js` is an *higher-order* contract library, as opposed to
@@ -185,6 +185,7 @@ implementation of `derive`.
 
 
 <a name="blame"/>
+
 ### Blame, Blame-correctness, and Blame Tracking
 
 In the last example, when `fn` fails to return a number, which code is
@@ -215,6 +216,7 @@ of the module interacting. `rho-contracts.js` only reports the function names.
 
 
 <a name="functions-as-values"/>
+
 ### Contracts on Functions-as-Values
 
 `rho-contracts.js`'s higher-order contracts can also be used to check the correctness
@@ -258,6 +260,7 @@ for the `dx` argument of the call.
 ```
 
 <a name="tutorial"/>
+
 ## Tutorial
 
 ### Additional Documentation
@@ -274,6 +277,7 @@ c = require('rho-contracts-fork')
 ```
 
 <a name="basic-value"/>
+
 ### Basic Value Contracts
 
 Some fields of `c` are contract objects you can use directly, such as the
@@ -346,6 +350,7 @@ be refused outright by most static type systems (that is so awesome.)
 
 
 <a name="storing"/>
+
 ### Storing Custom Contracts
 
 The contract library provides a rich collection of contract function to
@@ -395,6 +400,7 @@ ContractError: Expected numberAsString, but got 'o_0.'
 
 
 <a name="data-structure"/>
+
 ### Data Structure Contracts
 
 A `c.array()` contract checks that all items in the array passes the given
@@ -438,6 +444,7 @@ The full value being checked was:
 ```
 
 <a name="functions"/>
+
 ### Contracts on Functions
 
 Contract on functions are implemented by wrapping the implementing
@@ -572,6 +579,7 @@ for this `this` argument of the call.
 
 
 <a name="optargs"/>
+
 ### Contracts for Optional Arguments
 
 Contracts can be marked optional using `c.optional()` When used for a function's
@@ -599,6 +607,7 @@ ContractError: Too many arguments, expected at most 1 but got 2
 
 
 <a name="wrap-vs-check"/>
+
 ### Wrapping vs Checking
 
 Recall, we cannot tell if a function will be miscalled until it is called, and
@@ -675,6 +684,7 @@ hashes, tuples, and objects.
 
 
 <a name="objects"/>
+
 ### Object Contracts
 
 Since objects in JavaScript are constructed out of normal hash tables containing
@@ -825,7 +835,8 @@ ContractError: Field `carModel` required, got { trunkSize: 9.8 }
 
 
 <a name="lightweight"/>
-### A Lightweight Notation ###
+
+### A Lightweight Notation
 
 All `rho-contracts.js` functions will automatically promote simple values
 to the corresponding contract when passed to a function that expects a
