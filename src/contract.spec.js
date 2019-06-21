@@ -64,14 +64,10 @@ should.Assertion.prototype.throwType = function(type, message) {
       ok = true
     } else if (typeof message === 'string') {
       ok = message === err.message
-      errorInfo = `with a message exactly '${message}', but got '${
-        err.message
-      }'`
+      errorInfo = `with a message exactly '${message}', but got '${err.message}'`
     } else if (message instanceof RegExp) {
       ok = message.test(err.message)
-      errorInfo = `with a message matching ${message}', but got '${
-        err.message
-      }'`
+      errorInfo = `with a message matching ${message}', but got '${err.message}'`
     } else {
       throw new Error('should.throw expects a string or a regexp')
     }

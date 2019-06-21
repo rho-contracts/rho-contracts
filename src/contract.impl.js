@@ -432,9 +432,7 @@ function or(/* ... */) {
     throw new errors.ContractLibraryError(
       'or',
       false,
-      `Or-contracts can only take at most one wrapping contracts, got ${
-        self.wrappingContracts
-      }`
+      `Or-contracts can only take at most one wrapping contracts, got ${self.wrappingContracts}`
     )
 
   self.nestedChecker = function(data, next, context) {
@@ -495,11 +493,7 @@ function cyclic(/* opt */ needsWrapping) {
       throw new errors.ContractLibraryError(
         self.contractName,
         false,
-        `A ${self.contractName}() was started with needsWrapping=${
-          self.needsWrapping
-        }, but it was closed with a contract that has needsWrapping=${
-          c.needsWrapping
-        }:\n${c}`
+        `A ${self.contractName}() was started with needsWrapping=${self.needsWrapping}, but it was closed with a contract that has needsWrapping=${c.needsWrapping}:\n${c}`
       )
 
     _.each(c, function(v, k) {
