@@ -1,0 +1,35 @@
+extends:
+  - standard
+  - prettier
+
+env:
+  node: true
+  mocha: true
+
+parserOptions:
+  # Override eslint-config-standard, which incorrectly sets this to "module",
+  # though that setting is only for ES6 modules, not CommonJS modules.
+  sourceType: 'script'
+
+rules:
+  # Allow unused parameters. In callbacks, removing them seems to obscure
+  # what the functions are doing.
+  no-unused-vars: ['error', { 'args': 'none' }]
+
+  no-var: 'error'
+  prefer-const: 'error'
+  strict: 'error'
+  arrow-body-style: ['error', 'as-needed']
+  object-shorthand: ['error', 'properties']
+  prefer-template: 'error'
+  promise/prefer-await-to-then: 'error'
+
+  # This generates a lot of false positives.
+  no-new: 'off'
+
+  # TODO This generates a lot of false positives with the `should` library.
+  # Replace it with `chai` which comes with a chai-friendly linter.
+  no-unused-expressions: 'off'
+
+  # Conflicts with Prettier.
+  standard/computed-property-even-spacing: 'off'

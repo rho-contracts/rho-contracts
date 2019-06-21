@@ -1,38 +1,32 @@
-//  -*- js-indent-level: 2 -*-
 'use strict'
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef: true, newcap: true, undef: true, strict:true, node:true */
-/*global describe, it */
+const should = require('should')
+const __ = require('underscore')
+const c = require('./contract')
+const fs = require('fs')
+const errors = require('./contract-errors')
 
-var should = require('should')
-var __ = require('underscore')
-var c = require('./contract')
-var fs = require('fs')
-var errors = require('./contract-errors')
-
+// eslint-disable-next-line no-extend-native
 Array.prototype.toString = function() {
-  return '[' + this.join(', ') + ']'
+  return `[${this.join(', ')}]`
 }
 
-var oldToString = Object.prototype.toString
+const oldToString = Object.prototype.toString
+// eslint-disable-next-line no-extend-native
 Object.prototype.toString = function() {
-  var that = this
+  const that = this
   if (__.isObject(that))
-    return (
-      '{ ' +
-      __.chain(that)
-        .keys()
-        .map(function(k) {
-          return k + ': ' + that[k]
-        })
-        .value()
-        .join(', ') +
-      ' }'
-    )
+    return `{ ${__.chain(that)
+      .keys()
+      .map(function(k) {
+        return `${k}: ${that[k]}`
+      })
+      .value()
+      .join(', ')} }`
   else return oldToString.call(that)
 }
 
@@ -45,45 +39,39 @@ should.Assertion.prototype.throwContract = function(message) {
 }
 
 should.Assertion.prototype.throwType = function(type, message) {
-  var fn = this.obj,
-    err = {},
-    errorInfo = '',
-    caught,
-    ok
+  const fn = this.obj
+  let err = {}
+  let errorInfo = ''
+  let caught
+  let ok
 
   try {
-    var v = fn()
+    const v = fn()
     caught = false
     ok = false
-    errorInfo = 'but the function returned ' + v
+    errorInfo = `but the function returned ${v}`
   } catch (e) {
     err = e
     caught = true
   }
 
   if (caught) {
-    //console.log('\ncontracts/contract.spec.js Line 49:\n'+err+'\n'+err.renderedStack+'\n\n');
+    // console.log('\ncontracts/contract.spec.js Line 49:\n'+err+'\n'+err.renderedStack+'\n\n');
     if (err.name !== type.name) {
       ok = false
-      errorInfo = 'but the error was ' + err
+      errorInfo = `but the error was ${err}`
     } else if (!message) {
       ok = true
     } else if (typeof message === 'string') {
       ok = message === err.message
-      errorInfo =
-        "with a message exactly '" +
-        message +
-        "', but got '" +
-        err.message +
-        "'"
+      errorInfo = `with a message exactly '${message}', but got '${
+        err.message
+      }'`
     } else if (message instanceof RegExp) {
       ok = message.test(err.message)
-      errorInfo =
-        'with a message matching ' +
-        message +
-        "', but got '" +
-        err.message +
-        "'"
+      errorInfo = `with a message matching ${message}', but got '${
+        err.message
+      }'`
     } else {
       throw new Error('should.throw expects a string or a regexp')
     }
@@ -92,12 +80,10 @@ should.Assertion.prototype.throwType = function(type, message) {
   this.assert(
     ok,
     function() {
-      return 'expected a ' + type.name + ' to be thrown ' + errorInfo
+      return `expected a ${type.name} to be thrown ${errorInfo}`
     },
     function() {
-      return (
-        'expected no ' + type.name + ' to be thrown, got "' + err.message + '"'
-      )
+      return `expected no ${type.name} to be thrown, got "${err.message}"`
     }
   )
 
@@ -112,7 +98,7 @@ describe('toContract', function() {
     c.toContract({}).should.be.an['instanceof'](c.Contract)
   })
   it('wrap objects recursively', function() {
-    var kidPark = c.toContract({
+    const kidPark = c.toContract({
       name: c.string,
       acres: c.number,
       playunit: {
@@ -127,7 +113,7 @@ describe('toContract', function() {
       },
     })
 
-    var example = {
+    const example = {
       name: 'corner park',
       acres: 0.1,
       playunit: {
@@ -387,7 +373,7 @@ describe('hash', function() {
   })
   it('wrap wraps fields and fails', function() {
     ;(function() {
-      var x = { thk: function() {} }
+      const x = { thk: function() {} }
       c.hash(c.fn())
         .wrap(x)
         .thk(5)
@@ -516,7 +502,7 @@ describe('object', function() {
 
   it('wrap wraps fields and fails', function() {
     ;(function() {
-      var x = { thk: function() {} }
+      const x = { thk: function() {} }
       c.object({ thk: c.fn() })
         .wrap(x)
         .thk(5)
@@ -524,7 +510,7 @@ describe('object', function() {
   })
 
   it('wrap maintains prototypes', function() {
-    var x = { thk: function() {} }
+    const x = { thk: function() {} }
     Object.getPrototypeOf(x).x = 5
     Object.getPrototypeOf(c.object({ thk: c.fn() }).wrap(x)).should.eql({
       x: 5,
@@ -634,7 +620,6 @@ describe('strict', function() {
         .extend({ y: c.number })
         .check({ x: 5, y: 6, z: 7 })
     }.should.throwContract(/extra field/))
-
     ;(function() {
       c.object({ x: c.number })
         .extend({ y: c.number })
@@ -673,7 +658,7 @@ describe('constructs', function() {
     this.x -= i
   }
 
-  var Example = c
+  const Example = c
     .fun({ x: c.number })
     .constructs({
       inc: c.fun({ i: c.number }),
@@ -681,7 +666,7 @@ describe('constructs', function() {
     .wrap(ExampleImpl)
 
   it('creates a wrapped object', function() {
-    var instance = new Example(5)
+    const instance = new Example(5)
     instance.x.should.eql(5)
     instance.inc(2)
     instance.x.should.eql(7)
@@ -695,7 +680,7 @@ describe('constructs', function() {
   })
 
   it('refuses incorrectly constructed objects', function() {
-    var Wrap = c
+    const Wrap = c
       .fun({ x: c.number })
       .constructs({})
       .returns(c.object({ x: c.string }))
@@ -712,7 +697,7 @@ describe('constructs', function() {
   })
 
   it('fields omitted from the contract can be used normally', function() {
-    var w = new Example(4)
+    const w = new Example(4)
     w._dec('twenty')
     isNaN(w.x).should.be.ok
   })
@@ -744,24 +729,24 @@ describe('constructs', function() {
   })
 
   it('allows `instanceof` and `isA` checks on the wrapped constructor', function() {
-    var instance = new Example(5)
+    const instance = new Example(5)
     instance.should.be['instanceof'](Example)
     c.isA(Example).check(instance).should.be.ok
   })
 
   it('allows `instanceof` and `isA` checks on the implementation', function() {
-    var instance = new Example(5)
+    const instance = new Example(5)
     instance.should.be['instanceof'](ExampleImpl)
     c.isA(ExampleImpl).check(instance).should.be.ok
   })
 
   it('supports returning explicitly', function() {
-    var theReturnValue = { x: 5 }
-    var Constructor = function() {
+    let theReturnValue = { x: 5 }
+    const Constructor = function() {
       this.x = 1
       return theReturnValue
     }
-    var Wrapped = c
+    const Wrapped = c
       .fun()
       .returns(c.object({ x: c.number }))
       .constructs({})
@@ -787,7 +772,7 @@ describe('constructs', function() {
       this.x = 0
     }
 
-    var SubExample = c
+    const SubExample = c
       .fun({ i: c.number })
       .constructs({
         pair: c.fun().returns(c.array(c.number)),
@@ -795,7 +780,7 @@ describe('constructs', function() {
       .wrap(SubExampleImpl)
 
     it('produces a usable object with shared methods', function() {
-      var instance = new SubExample(10)
+      const instance = new SubExample(10)
       instance.should.have.property('pair')
       instance.should.not.have.ownProperty('pair')
       instance.should.have.property('inc')
@@ -803,12 +788,12 @@ describe('constructs', function() {
       instance.pair().should.eql([10, 10])
     })
     it('allows use of methods from up the chain', function() {
-      var instance = new SubExample(10)
+      const instance = new SubExample(10)
       instance.inc(2)
       instance.x.should.eql(12)
     })
     it('it detects misuses of methods from up the chain', function() {
-      var instance = new SubExample(10)
+      const instance = new SubExample(10)
       ;(function() {
         instance.inc('nope')
       }.should.throwContract(/number.*nope/))
@@ -817,13 +802,13 @@ describe('constructs', function() {
       }.should.throwContract(/Wrong number of arg/))
     })
     it('methods up the chain omitted from the contract can be used normally', function() {
-      var instance = new SubExample(10)
+      const instance = new SubExample(10)
       instance._dec(3)
       instance.x.should.eql(7)
     })
     it('check `isA` for the `this` argument', function() {
-      var instance = new SubExample(10)
-      var incFn = instance.inc
+      const instance = new SubExample(10)
+      const incFn = instance.inc
       ;(function() {
         incFn(20)
       }.should.throwContract(/isA\(ExampleImpl\)[\s\S]+the `this` argument/))
@@ -835,8 +820,8 @@ describe('constructs', function() {
       }.should.throwContract(/the `this` argument/))
     })
     it('`isA` checks on subclass refuses superclass', function() {
-      var instance = new SubExample(10)
-      var pairFn = instance.pair
+      const instance = new SubExample(10)
+      const pairFn = instance.pair
       ;(function() {
         pairFn.call(new Example(5))
       }.should.throwContract(/isA\(SubExampleImpl\)[\s\S]+`this`/))
@@ -844,7 +829,7 @@ describe('constructs', function() {
   })
 
   describe('when nested inside other contracts', function() {
-    var theContract = c.fun(
+    const theContract = c.fun(
       {
         x: c.object({
           BuildIt: c
@@ -858,19 +843,19 @@ describe('constructs', function() {
       { v: c.any }
     )
 
-    var theFunction = function(x, v) {
-      var instance = new x.BuildIt()
+    const theFunction = function(x, v) {
+      const instance = new x.BuildIt()
       return instance.inc(v)
     }
 
-    var wrapped = theContract.wrap(theFunction)
+    const wrapped = theContract.wrap(theFunction)
 
-    var TheConstructor = function() {}
+    const TheConstructor = function() {}
     TheConstructor.prototype.inc = function(i) {
       return i + 1
     }
 
-    var theObject = { BuildIt: TheConstructor }
+    const theObject = { BuildIt: TheConstructor }
 
     it('produces a usable object', function() {
       wrapped(theObject, 10).should.be.eql(11)
@@ -890,7 +875,7 @@ describe('constructs', function() {
       }
     })
     it('the truncated context retains the original wrap location', function() {
-      var index = __.findIndex(
+      const index = __.findIndex(
         fs
           .readFileSync('./src/contract.spec.js')
           .toString()
@@ -899,8 +884,8 @@ describe('constructs', function() {
           return line.match(/theContract.wrap\(theFunction\)/)
         }
       )
-      var expected = new RegExp(
-        'contract was wrapped at: .*/contract.spec.js:' + (index + 1)
+      const expected = new RegExp(
+        `contract was wrapped at: .*/contract.spec.js:${index + 1}`
       )
       ;(function() {
         wrapped(theObject, 'ten')
@@ -910,35 +895,35 @@ describe('constructs', function() {
 })
 
 describe('fn', function() {
-  var id = function(x) {
+  const id = function(x) {
     return x
   }
-  var strId = function(x) {
-    return '' + x
+  const strId = function(x) {
+    return `${x}`
   }
-  var twoId = function(x, y) {
+  const twoId = function(x, y) {
     return [x, y]
   }
-  var manyId = function(/* ... */) {
+  const manyId = function(/* ... */) {
     return arguments[0]
   }
-  var thisId = function(x) {
+  const thisId = function(x) {
     return this.x
   }
 
-  var idC = c.fn(c.number).returns(c.number)
-  var strIdC = c.fn(c.number).returns(c.string)
-  var twoIdC = c.fn(c.number, c.string).returns(c.tuple(c.number, c.string))
-  var manyIdC = c
+  const idC = c.fn(c.number).returns(c.number)
+  const strIdC = c.fn(c.number).returns(c.string)
+  const twoIdC = c.fn(c.number, c.string).returns(c.tuple(c.number, c.string))
+  const manyIdC = c
     .fn()
     .extraArgs([c.number])
     .returns(c.number)
-  var thisC = c
+  const thisC = c
     .fn(c.number)
     .thisArg(c.object({ x: c.string }))
     .returns(c.string)
 
-  var oneOptC = c.fn(c.number, c.optional(c.number))
+  const oneOptC = c.fn(c.number, c.optional(c.number))
 
   it('is a function', function() {
     idC.wrap(id).should.be['instanceof'](Function)
@@ -1001,12 +986,12 @@ describe('fn', function() {
   })
 
   it('success on this', function() {
-    var v = { x: 'w', getX: thisC.wrap(thisId) }
+    const v = { x: 'w', getX: thisC.wrap(thisId) }
     v.getX(4).should.eql('w')
   })
   it('fails on this', function() {
     ;(function() {
-      var v = { x: 50, getX: thisC.wrap(thisId) }
+      const v = { x: 50, getX: thisC.wrap(thisId) }
       v.getX(4)
     }.should.throwContract(/this/))
   })
@@ -1040,32 +1025,32 @@ describe('fn', function() {
 })
 
 describe('fun', function() {
-  var id = function(x) {
+  const id = function(x) {
     return x
   }
-  var strId = function(x) {
-    return '' + x
+  const strId = function(x) {
+    return `${x}`
   }
-  var twoId = function(x, y) {
+  const twoId = function(x, y) {
     return [x, y]
   }
-  var manyId = function(/* ... */) {
+  const manyId = function(/* ... */) {
     return arguments[0]
   }
-  var thisId = function(x) {
+  const thisId = function(x) {
     return this.x
   }
 
-  var idC = c.fun({ the_arg: c.number }).returns(c.number)
-  var strIdC = c.fun({ the_arg: c.number }).returns(c.string)
-  var twoIdC = c
+  const idC = c.fun({ the_arg: c.number }).returns(c.number)
+  const strIdC = c.fun({ the_arg: c.number }).returns(c.string)
+  const twoIdC = c
     .fun({ fstArg: c.number }, { sndArg: c.string })
     .returns(c.tuple(c.number, c.string))
-  var manyIdC = c
+  const manyIdC = c
     .fun()
     .extraArgs([c.number])
     .returns(c.number)
-  var thisC = c
+  const thisC = c
     .fun({ y: c.number })
     .thisArg(c.object({ x: c.string }))
     .returns(c.string)
@@ -1131,12 +1116,12 @@ describe('fun', function() {
   })
 
   it('success on this', function() {
-    var v = { x: 'w', getX: thisC.wrap(thisId, 'thisId') }
+    const v = { x: 'w', getX: thisC.wrap(thisId, 'thisId') }
     v.getX(4).should.eql('w')
   })
   it('fails on this', function() {
     ;(function() {
-      var v = { x: 50, getX: thisC.wrap(thisId) }
+      const v = { x: 50, getX: thisC.wrap(thisId) }
       v.getX(5)
     }.should.throwContract(/this/))
   })

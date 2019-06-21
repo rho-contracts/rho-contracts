@@ -1,16 +1,12 @@
-// -*- js-indent-level: 2 -*-
 'use strict'
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef:true, newcap:true, undef:true, strict:false, node:true, loopfunc:true, latedef:false */
-
-var util = require('util')
-var u = require('./utils')
-var _ = require('underscore')
-var errors = require('./contract-errors')
+const u = require('./utils')
+const _ = require('underscore')
+const errors = require('./contract-errors')
 
 exports.privates = {}
 
@@ -26,7 +22,7 @@ Error.stackTraceLimit = Infinity
 
 exports.setErrorMessageInspectionDepth = u.setErrorMessageInspectionDepth
 
-//--
+// --
 //
 // Basic recursive checking with path tracking
 //
@@ -76,8 +72,10 @@ function wrapWContext(contract, data, context) {
         if (nextContext !== errors.stackContextItems.silent) {
           context.stack.push(nextContext)
         }
-        var c = _autoToContract(nextContract)
-        var subWrap = !c.needsWrapping ? nextV : wrapWContext(c, nextV, context)
+        const c = _autoToContract(nextContract)
+        const subWrap = !c.needsWrapping
+          ? nextV
+          : wrapWContext(c, nextV, context)
         if (nextContext !== errors.stackContextItems.silent) {
           context.stack.pop()
         }
@@ -89,7 +87,7 @@ function wrapWContext(contract, data, context) {
 }
 
 function checkWrapWContext(contract, data, context) {
-  var c = _autoToContract(contract)
+  const c = _autoToContract(contract)
   checkWContext(c, data, context)
   if (!contract.needsWrapping) return data
   else {
@@ -103,28 +101,28 @@ exports.privates.checkWrapWContext = checkWrapWContext
 
 function newContext(thingName, data, contract, wrapping) {
   return {
-    thingName: thingName,
+    thingName,
     blameMe: true,
-    data: data,
+    data,
     stack: [],
     fail: function(e) {
       e.captureCleanStack()
       throw e
     },
-    contract: contract,
-    wrapping: wrapping,
+    contract,
+    wrapping,
   }
 }
 
-//--
+// --
 //
 // Base class for contracts
 //
 
 // State for the documentation mechanisms:
-var builtInContractNames = []
-var collectingBuiltInContractNames = true
-var currentCategory = false
+const builtInContractNames = []
+let collectingBuiltInContractNames = true
+let currentCategory = false
 
 function Contract(
   name, // name: the name of the contract as it should appear in the error messages
@@ -148,7 +146,7 @@ Contract.prototype = {
   isOptional: false,
 
   needsWrappingIfAny: function(contracts) {
-    var self = this
+    const self = this
     if (
       _.any(_.map(contracts, _autoToContract), function(c) {
         return c.needsWrapping
@@ -158,14 +156,10 @@ Contract.prototype = {
   },
 
   firstChecker: function(data) {
-    var self = this
     return true
   },
-  nestedChecker: function(data, next) {
-    var self = this
-  },
+  nestedChecker: function(data, next) {},
   wrapper: function(data, next, context) {
-    var self = this
     throw new errors.ContractLibraryError(
       wrap,
       context,
@@ -173,7 +167,7 @@ Contract.prototype = {
     ).fullContract()
   },
   check: function(data, /* opt */ name) {
-    var self = this
+    const self = this
     checkWContext(
       this,
       data,
@@ -182,20 +176,18 @@ Contract.prototype = {
     return data
   },
   wrap: function(data, name) {
-    var self = this
-    var context = newContext(name || self.thingName, data, this, true)
+    const self = this
+    const context = newContext(name || self.thingName, data, this, true)
     return checkWrapWContext(this, data, context)
   },
   toString: function() {
-    var self = this
-    return 'c.' + self.contractName + '(' + self.subToString().join(', ') + ')'
+    const self = this
+    return `c.${self.contractName}(${self.subToString().join(', ')})`
   },
   subToString: function() {
-    var self = this
     return []
   },
   rename: function(name) {
-    var self = this
     if (
       collectingBuiltInContractNames &&
       !_.contains(builtInContractNames, name)
@@ -204,25 +196,24 @@ Contract.prototype = {
     return u.gentleUpdate(this, {
       contractName: name,
       toString: function() {
-        return 'c.' + name
+        return `c.${name}`
       },
     })
   },
 
   optional: function() {
-    var self = this
-    var oldToString = self.toString
+    const self = this
+    const oldToString = self.toString
     return u.gentleUpdate(this, {
       isOptional: true,
       toString: function() {
-        var self = this
-        return 'c.optional(' + oldToString.call(self) + ')'
+        const self = this
+        return `c.optional(${oldToString.call(self)})`
       },
     })
   },
 
-  doc: function(/*...*/) {
-    var self = this
+  doc: function(/* ... */) {
     return u.gentleUpdate(this, {
       theDoc: _.toArray(arguments),
       category: currentCategory,
@@ -232,7 +223,7 @@ Contract.prototype = {
 
 exports.Contract = Contract
 
-//--
+// --
 //
 // Elementary contract functions
 //
@@ -245,13 +236,13 @@ function _toContract(v, upgradeObjects) {
       throw new errors.ContractLibraryError(
         'toContract',
         false,
-        'the example element of the array is missing. ' + v
+        `the example element of the array is missing. ${v}`
       )
     if (_.size(v) > 1)
       throw new errors.ContractLibraryError(
         'toContract',
         false,
-        'the given array has more than one element: ' + v
+        `the given array has more than one element: ${v}`
       )
     return array(_toContract(v[0], upgradeObjects))
   } else if (!_.isObject(v) && !_.isFunction(v)) {
@@ -262,7 +253,7 @@ function _toContract(v, upgradeObjects) {
     throw new errors.ContractLibraryError(
       'toContract',
       false,
-      'Cannot promote ' + u.stringify(v) + ' to a contract'
+      `Cannot promote ${u.stringify(v)} to a contract`
     )
 }
 
@@ -291,7 +282,7 @@ function optional(contract) {
 }
 exports.optional = optional
 
-var any = new Contract('any')
+const any = new Contract('any')
 exports.any = any
 
 function pred(fn) {
@@ -299,7 +290,7 @@ function pred(fn) {
 }
 exports.pred = pred
 
-var nothing = pred(function(data) {
+const nothing = pred(function(data) {
   return false
 }).rename('nothing')
 exports.nothing = nothing
@@ -308,81 +299,81 @@ exports.nothing = nothing
 function not(c) { return
 
 */
-var falsy = pred(function(data) {
+const falsy = pred(function(data) {
   return !data
 }).rename('falsy')
 exports.falsy = falsy
 
-var truthy = pred(function(data) {
+const truthy = pred(function(data) {
   return !!data
 }).rename('truthy')
 exports.truthy = truthy
 
-function oneOf(/*...*/) {
-  return new Contract('oneOf(' + _.toArray(arguments).join(', ') + ')', {
+function oneOf(/* ... */) {
+  return new Contract(`oneOf(${_.toArray(arguments).join(', ')})`, {
     firstChecker: function(vv) {
-      var self = this
+      const self = this
       return _.contains(self.values, vv)
     },
     values: _.toArray(arguments),
     toString: function() {
-      var self = this
-      return 'c.' + self.contractName
+      const self = this
+      return `c.${self.contractName}`
     },
   })
 }
 exports.oneOf = oneOf
 
 function value(v) {
-  return oneOf(v).rename('value(' + v + ')')
+  return oneOf(v).rename(`value(${v})`)
 }
 exports.value = value
 
-var string = pred(_.isString).rename('string')
+const string = pred(_.isString).rename('string')
 exports.string = string
 
-var number = pred(_.isNumber).rename('number')
+const number = pred(_.isNumber).rename('number')
 exports.number = number
 
-var integer = pred(function(v) {
+const integer = pred(function(v) {
   return Math.floor(v) === v
 }).rename('integer')
 exports.integer = integer
 
-var bool = pred(_.isBoolean).rename('bool')
+const bool = pred(_.isBoolean).rename('bool')
 exports.bool = bool
 
-var regexp = pred(_.isRegExp).rename('regexp')
+const regexp = pred(_.isRegExp).rename('regexp')
 exports.regexp = regexp
 
-var date = pred(_.isDate).rename('Date')
+const date = pred(_.isDate).rename('Date')
 exports.date = date
 
-var anyFunction = pred(_.isFunction).rename('fun(...)')
+const anyFunction = pred(_.isFunction).rename('fun(...)')
 exports.anyFunction = anyFunction
 
-var isA = function(parent) {
-  var name = u.functionName(parent) || '...'
+const isA = function(parent) {
+  const name = u.functionName(parent) || '...'
   return pred(function(v) {
     return v instanceof parent
-  }).rename('isA(' + name + ')')
+  }).rename(`isA(${name})`)
 }
 exports.isA = isA
 
-var error = isA(Error).rename('error')
+const error = isA(Error).rename('error')
 exports.error = error
 
-var contract = pred(function(v) {
+const contract = pred(function(v) {
   return u.isContractInstance(v) || _.isArray(v) || !_.isObject(v)
 }).rename('contract')
 exports.contract = contract
 
-var quacksLike = function(parent, name) {
-  return fromExample(parent).rename('quacksLike(' + (name || '...') + ')')
+const quacksLike = function(parent, name) {
+  return fromExample(parent).rename(`quacksLike(${name || '...'})`)
 }
 exports.quacksLike = quacksLike
 
-//--
+// --
 //
 // Contract combiners
 //
@@ -396,14 +387,13 @@ function checkMany(silent, contracts, data, next) {
 
 function makeAnd(silent) {
   return function(/* ... */) {
-    var self = new Contract('and')
+    const self = new Contract('and')
     self.contracts = _.toArray(arguments)
     self.nestedChecker = function(data, next) {
-      var self = this
+      const self = this
       checkMany(silent, self.contracts, data, next)
     }
     self.wrapper = function(data, next, context) {
-      var self = this
       throw new errors.ContractLibraryError(
         'wrap',
         context,
@@ -412,19 +402,19 @@ function makeAnd(silent) {
     }
     self.needsWrappingIfAny(self.contracts)
     self.subToString = function() {
-      var self = this
+      const self = this
       return self.contracts
     }
     return self
   }
 }
-var silentAnd = makeAnd(true)
-var and = makeAnd(false)
+const silentAnd = makeAnd(true)
+const and = makeAnd(false)
 exports.silentAnd = silentAnd
 exports.and = and
 
 function matches(r) {
-  var name = 'matches(' + r + ')'
+  const name = `matches(${r})`
   return pred(function(v) {
     return _.isString(v) && r.test(v)
   }).rename(name)
@@ -432,9 +422,8 @@ function matches(r) {
 exports.matches = matches
 
 function or(/* ... */) {
-  var self = new Contract('or')
+  const self = new Contract('or')
   self.contracts = _.filter(arguments, function(c) {
-    var self = this
     return !c.needsWrapping
   })
   self.wrappingContracts = _.difference(arguments, self.contracts)
@@ -443,23 +432,24 @@ function or(/* ... */) {
     throw new errors.ContractLibraryError(
       'or',
       false,
-      'Or-contracts can only take at most one wrapping contracts, got ' +
+      `Or-contracts can only take at most one wrapping contracts, got ${
         self.wrappingContracts
+      }`
     )
 
   self.nestedChecker = function(data, next, context) {
-    var self = this
-    var allContracts = _.union(self.contracts, self.wrappingContracts)
-    var exceptions = []
+    const self = this
+    const allContracts = _.union(self.contracts, self.wrappingContracts)
+    const exceptions = []
 
-    var oldFail = context.fail
-    var success = false
+    const oldFail = context.fail
+    let success = false
 
     _(allContracts).each(function(contract) {
-      var failed = false
+      let failed = false
       if (!success) {
         context.fail = function(e) {
-          exceptions.push({ c: contract, e: e })
+          exceptions.push({ c: contract, e })
           failed = true
         }
         next(contract, data, errors.stackContextItems.silent)
@@ -469,22 +459,16 @@ function or(/* ... */) {
     context.fail = oldFail
 
     if (!success) {
-      var msg =
-        'none of the contracts passed:\n' +
-        _(allContracts)
-          .map(function(c) {
-            return ' - ' + c.toString()
-          })
-          .join('\n') +
-        '\n\nThe failures were:\n' +
-        _(exceptions)
-          .map(function(c_e, i) {
-            return (
-              '[' + (i + 1) + '] --\n' + c_e.c.toString() + ': ' + c_e.e.message
-            )
-          })
-          .join('\n\n') +
-        '\n'
+      const msg = `none of the contracts passed:\n${_(allContracts)
+        .map(function(c) {
+          return ` - ${c.toString()}`
+        })
+        .join('\n')}\n\nThe failures were:\n${_(exceptions)
+        .map(function(contractError, i) {
+          return `[${i +
+            1}] --\n${contractError.c.toString()}: ${contractError.e.message}`
+        })
+        .join('\n\n')}\n`
 
       context.fail(
         new errors.ContractError(context, msg).fullContractAndValue(context)
@@ -493,8 +477,8 @@ function or(/* ... */) {
     return success // return the successful contract to self.wrapper
   }
   self.wrapper = function(data, next, context) {
-    var self = this
-    var c = self.nestedChecker(data, function() {}, context) // this is a bit of a hack.
+    const self = this
+    const c = self.nestedChecker(data, function() {}, context) // this is a bit of a hack.
     return next(c, data, errors.stackContextItems.or)
   }
   self.needsWrappingIfAny(_.union(self.contracts, self.wrappingContracts))
@@ -502,23 +486,20 @@ function or(/* ... */) {
 }
 exports.or = or
 
-function cyclic(/*opt*/ needsWrapping) {
-  var self = new Contract('cyclic')
-  self.needsWrapping = _.isUndefined(needsWrapping) ? true : false
+function cyclic(/* opt */ needsWrapping) {
+  const self = new Contract('cyclic')
+  self.needsWrapping = !!_.isUndefined(needsWrapping)
   self.closeCycle = function(c) {
-    var self = this
+    const self = this
     if (self.needsWrapping !== c.needsWrapping)
       throw new errors.ContractLibraryError(
         self.contractName,
         false,
-        'A ' +
-          self.contractName +
-          '() was started with needsWrapping=' +
-          self.needsWrapping +
-          ', but it was closed with a contract that has needsWrapping=' +
-          c.needsWrapping +
-          ':\n' +
-          c
+        `A ${self.contractName}() was started with needsWrapping=${
+          self.needsWrapping
+        }, but it was closed with a contract that has needsWrapping=${
+          c.needsWrapping
+        }:\n${c}`
       )
 
     _.each(c, function(v, k) {
@@ -530,34 +511,32 @@ function cyclic(/*opt*/ needsWrapping) {
 }
 exports.cyclic = cyclic
 
-function forwardRef(/*opt*/ needsWrapping) {
-  var result = cyclic(_.isUndefined(needsWrapping) ? false : true).rename(
-    'forwardRef'
-  )
+function forwardRef(/* opt */ needsWrapping) {
+  const result = cyclic(!_.isUndefined(needsWrapping)).rename('forwardRef')
   result.setRef = result.closeCycle
   delete result.closeCycle
   return result
 }
 exports.forwardRef = forwardRef
 
-//--
+// --
 //
 // Data structure contracts
 //
 
 function array(itemContract) {
-  var self = new Contract('array')
+  const self = new Contract('array')
   self.itemContract = itemContract
   self.firstChecker = _.isArray
   self.nestedChecker = function(data, next) {
-    var self = this
+    const self = this
     _.each(data, function(item, i) {
       next(self.itemContract, item, errors.stackContextItems.arrayItem(i))
     })
   }
   self.wrapper = function(data, next) {
-    var self = this
-    var result = _.map(data, function(item, i) {
+    const self = this
+    const result = _.map(data, function(item, i) {
       return next(
         self.itemContract,
         item,
@@ -568,7 +547,7 @@ function array(itemContract) {
   }
   self.needsWrappingIfAny([itemContract])
   self.subToString = function() {
-    var self = this
+    const self = this
     return [self.itemContract]
   }
   return self
@@ -576,15 +555,15 @@ function array(itemContract) {
 exports.array = array
 
 function tuple(/* ... */) {
-  var self = new Contract('tuple')
+  const self = new Contract('tuple')
   self.contracts = _.toArray(arguments)
   self.firstChecker = _.isArray
   self.nestedChecker = function(data, next, context) {
-    var self = this
+    const self = this
     if (_.size(data) < _.size(self.contracts)) {
       context.fail(
         new errors.ContractError(context).expected(
-          'tuple of size ' + _.size(self.contracts),
+          `tuple of size ${_.size(self.contracts)}`,
           data
         )
       )
@@ -597,7 +576,7 @@ function tuple(/* ... */) {
     )
   }
   self.wrapper = function(data, next) {
-    var self = this
+    const self = this
     return _.map(
       _.zip(self.contracts, data.slice(0, _.size(self.contracts))),
       function(pair, i) {
@@ -607,15 +586,15 @@ function tuple(/* ... */) {
   }
 
   self.strict = function() {
-    var self = this
-    var oldNestedChecker = self.nestedChecker
-    var result = u.gentleUpdate(self, {
+    const self = this
+    const oldNestedChecker = self.nestedChecker
+    const result = u.gentleUpdate(self, {
       nestedChecker: function(data, next, context) {
-        var self = this
+        const self = this
         if (_.size(data) !== _.size(self.contracts)) {
           context.fail(
             new errors.ContractError(context)
-              .expected('tuple of exactly size ' + _.size(self.contracts), data)
+              .expected(`tuple of exactly size ${_.size(self.contracts)}`, data)
               .fullContractAndValue()
           )
         }
@@ -623,7 +602,7 @@ function tuple(/* ... */) {
       },
 
       strict: function() {
-        var self = this
+        const self = this
         return self
       },
     })
@@ -633,7 +612,7 @@ function tuple(/* ... */) {
 
   self.needsWrappingIfAny(self.contracts)
   self.subToString = function() {
-    var self = this
+    const self = this
     return self.contracts
   }
   return self
@@ -641,20 +620,20 @@ function tuple(/* ... */) {
 exports.tuple = tuple
 
 function hash(valueContract) {
-  var self = new Contract('hash')
+  const self = new Contract('hash')
   self.valueContract = valueContract
   self.firstChecker = function(v) {
     return _.isObject(v) && !u.isContractInstance(v)
   }
   self.nestedChecker = function(data, next, context) {
-    var self = this
+    const self = this
     _.each(data, function(v, k) {
       next(self.valueContract, v, errors.stackContextItems.hashItem(k))
     })
   }
   self.wrapper = function(data, next, context) {
-    var self = this
-    var result = u.clone(data)
+    const self = this
+    const result = u.clone(data)
     _.each(result, function(v, k) {
       result[k] = next(
         self.valueContract,
@@ -666,15 +645,15 @@ function hash(valueContract) {
   }
   self.needsWrappingIfAny([self.valueContract])
   self.subToString = function() {
-    var self = this
+    const self = this
     return [self.valueContract]
   }
   return self
 }
 exports.hash = hash
 
-function object(/*opt*/ fieldContracts) {
-  var self = new Contract('object')
+function object(/* opt */ fieldContracts) {
+  const self = new Contract('object')
   self.fieldContracts = {}
   _.each(fieldContracts, function(c, k) {
     self.fieldContracts[k] = _autoToContract(c)
@@ -682,14 +661,14 @@ function object(/*opt*/ fieldContracts) {
 
   self.firstChecker = _.isObject
   self.nestedChecker = function(data, next, context) {
-    var self = this
+    const self = this
 
     _(self.fieldContracts).each(function(contract, field) {
       if (!contract.isOptional && u.isMissing(data[field])) {
         context.fail(
           new errors.ContractError(
             context,
-            'Field `' + field + '` required, got ' + u.stringify(data)
+            `Field \`${field}\` required, got ${u.stringify(data)}`
           ).fullContractAndValue()
         )
       }
@@ -698,8 +677,8 @@ function object(/*opt*/ fieldContracts) {
     })
   }
   self.wrapper = function(data, next) {
-    var self = this
-    var result = u.clone(data)
+    const self = this
+    const result = u.clone(data)
 
     _(self.fieldContracts).each(function(contract, field) {
       if (contract.needsWrapping) {
@@ -715,34 +694,31 @@ function object(/*opt*/ fieldContracts) {
   }
 
   self.extend = function(newFields) {
-    var self = this
-    var oldToString = self.toString
+    const self = this
+    // const oldToString = self.toString
     return u.gentleUpdate(self, {
       fieldContracts: u.gentleUpdate(self.fieldContracts, newFields),
     }) // TODO: toString when being renamed
   }
 
   self.strict = function() {
-    var self = this
-    var oldNestedChecker = self.nestedChecker
-    var result = u.gentleUpdate(self, {
+    const self = this
+    const oldNestedChecker = self.nestedChecker
+    const result = u.gentleUpdate(self, {
       nestedChecker: function(data, next, context) {
-        var self = this
-        var extra = _.difference(_.keys(data), _.keys(self.fieldContracts))
+        const self = this
+        const extra = _.difference(_.keys(data), _.keys(self.fieldContracts))
         if (!_.isEmpty(extra)) {
-          var extraStr = _.map(extra, function(k) {
-            return '`' + k + '`'
+          const extraStr = _.map(extra, function(k) {
+            return `\`${k}\``
           }).join(', ')
 
           context.fail(
             new errors.ContractError(
               context,
-              'Found the extra field' +
-                (_.size(extra) === 1 ? ' ' : 's ') +
-                extraStr +
-                ' in ' +
-                u.stringify(data) +
-                '\n'
+              `Found the extra field${
+                _.size(extra) === 1 ? ' ' : 's '
+              }${extraStr} in ${u.stringify(data)}\n`
             ).fullContractAndValue()
           )
         }
@@ -750,7 +726,7 @@ function object(/*opt*/ fieldContracts) {
       },
 
       strict: function() {
-        var self = this
+        const self = this
         return self
       },
     })
@@ -759,20 +735,16 @@ function object(/*opt*/ fieldContracts) {
 
   self.needsWrappingIfAny(_.values(self.fieldContracts))
   self.toString = function() {
-    var self = this
-    return (
-      'c.object({' +
-      _.map(self.fieldContracts, function(v, k) {
-        return k + ': ' + v
-      }).join(', ') +
-      '})'
-    )
+    const self = this
+    return `c.object({${_.map(self.fieldContracts, function(v, k) {
+      return `${k}: ${v}`
+    }).join(', ')}})`
   }
   return self
 }
 exports.object = object
 
-//---
+// ---
 //
 // Relevant utility functions
 //
@@ -781,9 +753,9 @@ function fromExample(v, withQuestionMark) {
   if (_.isArray(v)) {
     return array(fromExample(v[0]))
   } else if (_.isObject(v)) {
-    var result = {}
+    const result = {}
     _.each(v, function(vv, k) {
-      var c = fromExample(vv)
+      const c = fromExample(vv)
       if (withQuestionMark && /^\?/.test(k)) {
       } else {
         result[k] = c
@@ -804,13 +776,13 @@ function fromExample(v, withQuestionMark) {
     throw new errors.ContractLibraryError(
       'fromExample',
       false,
-      "can't create a contract from " + v
+      `can't create a contract from ${v}`
     )
   }
 }
 exports.fromExample = fromExample
 
-var documentationTable = {}
+const documentationTable = {}
 
 exports.documentationTable = documentationTable
 
@@ -837,7 +809,7 @@ function documentModule(moduleName /* ... */) {
 }
 exports.documentModule = documentModule
 
-function documentCategory(moduleName, category /*...*/) {
+function documentCategory(moduleName, category /* ... */) {
   moduleName = ensureDocumentationTable(moduleName)
 
   currentCategory = category
@@ -858,24 +830,23 @@ function documentType(moduleName, contract) {
 
   if (documentationTable[moduleName].types[contract.contractName])
     throw new errors.ContractLibraryError(
-      '`documentType` called with a contract whose name that is already documented: ' +
-        contract
+      `\`documentType\` called with a contract whose name that is already documented: ${contract}`
     )
 
   documentationTable[moduleName].types[contract.contractName] = contract
 }
 exports.documentType = documentType
 
-function publish(moduleName, self, contracts, /*opt*/ additionalExports) {
+function publish(moduleName, self, contracts, /* opt */ additionalExports) {
   moduleName = ensureDocumentationTable(moduleName)
 
-  var result = additionalExports ? u.clone(additionalExports) : {}
+  const result = additionalExports ? u.clone(additionalExports) : {}
   _.each(contracts, function(c, n) {
     if (!_.has(self, n))
       throw new errors.ContractLibraryError(
         'publish',
         false,
-        n + ' is missing in the implementation'
+        `${n} is missing in the implementation`
       )
     documentationTable[moduleName].values[n] = c
     result[n] = c.wrap(self[n], n)

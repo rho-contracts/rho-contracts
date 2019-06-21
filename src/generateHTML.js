@@ -1,19 +1,17 @@
-//  -*- js-indent-level: 2 -*-
 'use strict'
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef: true, newcap: true, undef: true, strict:true, node:true */
+const __ = require('underscore')
+const fs = require('fs')
+const m = require('mustache')
+const c = require('./contract')
+const marked = require('marked')
 
-var __ = require('underscore')
-var fs = require('fs')
-var m = require('mustache')
-var c = require('./contract')
-var marked = require('marked')
-
-var moduleTemplateData = {
+// eslint-disable-next-line no-unused-vars
+const moduleTemplateData = {
   name: 'contract',
 
   doc: 'the contract library is great.',
@@ -75,7 +73,7 @@ function renderValue(item, name) {
 }
 
 function renderType(type, name) {
-  var result = {
+  const result = {
     name: type.contractName,
     doc: renderDoc(type.theDoc),
   }
@@ -91,7 +89,7 @@ function renderType(type, name) {
 
 function renderCategories(mod) {
   function filterForCat(list, cat) {
-    var result = {}
+    const result = {}
     __.each(list, function(v, n) {
       if (v.category === cat) result[n] = v
     })
@@ -106,8 +104,8 @@ function renderCategories(mod) {
     r.hasValues = !__.isEmpty(r.values)
   }
 
-  var result = __.map(mod.categories, function(cat) {
-    var result = {
+  const result = __.map(mod.categories, function(cat) {
+    const result = {
       hasHeader: true,
       name: c.name,
       doc: renderDoc(c.doc),
@@ -121,10 +119,10 @@ function renderCategories(mod) {
     return result
   })
 
-  var otherValues = filterForCat(mod.values, false)
-  var otherTypes = filterForCat(mod.types, false)
+  const otherValues = filterForCat(mod.values, false)
+  const otherTypes = filterForCat(mod.types, false)
   if (otherValues || otherTypes) {
-    var other = { hasHeader: false }
+    const other = { hasHeader: false }
     addTypesValues(other, otherTypes, otherValues)
     result.unshift(other)
   }
@@ -133,10 +131,10 @@ function renderCategories(mod) {
 }
 
 function renderModule(name) {
-  var mod = c.documentationTable[name]
+  const mod = c.documentationTable[name]
 
   return {
-    name: name,
+    name,
     doc: renderDoc(mod.doc),
     categories: renderCategories(mod),
   }
@@ -149,9 +147,9 @@ function generateHTML() {
       process.exit(1)
     }
     console.log(renderModule('Contracts'))
-    var html = m.to_html(
+    const html = m.to_html(
       template,
-      //moduleTemplateData
+      // moduleTemplateData
       renderModule('Contracts')
     )
     console.log(html)
