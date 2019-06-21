@@ -1,19 +1,16 @@
-// -*- js-indent-level: 2 -*-
 'use strict'
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*jshint eqeqeq:true, bitwise:true, forin:true, immed:true, latedef:true, newcap:true, undef:true, strict:false, node:true */
-
-var _ = require('underscore')
-var c = require('./contract.impl')
-var errors = require('./contract-errors')
+const _ = require('underscore')
+const c = require('./contract.impl')
+const errors = require('./contract-errors')
 
 _.extend(c, require('./function-contracts.js'))
 
-var thisModuleName = 'Contracts'
+const thisModuleName = 'Contracts'
 
 c.documentModule(
   thisModuleName,
@@ -47,7 +44,7 @@ c.documentModule(
 
 // ----
 
-var contractObject = c.cyclic()
+const contractObject = c.cyclic()
 
 contractObject.closeCycle(
   c
@@ -113,7 +110,7 @@ c.documentType(thisModuleName, contractObject)
 
 // Contracts on tuples have one extra method:
 
-var strictExtension = {
+const strictExtension = {
   strict: c
     .method(c.contract)
     .returns(contractObject)
@@ -124,11 +121,11 @@ var strictExtension = {
     ),
 }
 
-var tupleContractObject = contractObject
+const tupleContractObject = contractObject
   .extend(strictExtension)
   .rename('tupleContractObject')
 
-var objectContractObject = c.cyclic()
+const objectContractObject = c.cyclic()
 
 objectContractObject.closeCycle(
   contractObject
@@ -148,7 +145,7 @@ objectContractObject.closeCycle(
 
 c.documentType(thisModuleName, objectContractObject)
 
-var functionContract = c.cyclic()
+const functionContract = c.cyclic()
 
 functionContract.closeCycle(
   contractObject
@@ -196,14 +193,14 @@ functionContract.closeCycle(
 
 c.documentType(thisModuleName, functionContract)
 
-var contextContract = c.object({
-  thingName: c.string,
-  data: c.any,
-  stack: c.array(c.any),
-  contract: c.contract,
-})
+// const contextContract = c.object({
+//   thingName: c.string,
+//   data: c.any,
+//   stack: c.array(c.any),
+//   contract: c.contract,
+// })
 
-var contracts = {
+const contracts = {
   check: c
     .fun(
       { contract: c.contract },
@@ -490,7 +487,7 @@ var contracts = {
       'the error messages. Default to `null` (unlimited).'
     ),
 
-  //--
+  // --
   //
   // Functionality to write documentation
   //
@@ -594,11 +591,11 @@ var contracts = {
 module.exports = c.publish(thisModuleName, c, contracts)
 
 _.extend(module.exports, {
-  functionContract: functionContract,
-  contractObject: contractObject,
-  strictExtension: strictExtension,
-  tupleContractObject: tupleContractObject,
-  objectContractObject: objectContractObject,
+  functionContract,
+  contractObject,
+  strictExtension,
+  tupleContractObject,
+  objectContractObject,
   Contract: c.Contract,
   ContractError: errors.ContractError,
 })
