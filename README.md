@@ -2,8 +2,7 @@
     - License, v. 2.0. If a copy of the MPL was not distributed with this
     - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-rho-contracts-fork
-==================
+# rho-contracts-fork
 
 Racket-style Higher-Order Contracts in Plain JavaScript
 
@@ -12,15 +11,13 @@ original author and the team at Body Labs. The maintainers under the
 `sefaira/` account are on hiatus, so this fork will continue
 rho-contracts' maintenance and development, notably
 
-* Implemented support for ES6 classes
-* Improved stack trace support across more browsers
-
-
+- Implemented support for ES6 classes
+- Improved stack trace support across more browsers
 
 [sefaira/rho-contracts.js]: https://github.com/sefaira/rho-contracts.js
 
-
 ## Table of Content
+
 [Installation](#installation)  
 [Introduction](#introduction)  
 [Run-time vs Compile-time](#runtime)  
@@ -28,7 +25,7 @@ rho-contracts' maintenance and development, notably
 [Blame, Blame-correctness, and Blame Tracking](#blame)  
 [Contracts on Functions-as-Values](#functions-as-values)  
 [Tutorial](#tutorial)  
-[Additional Documentation](#tutorial)__
+[Additional Documentation](#tutorial)\_\_
 [Basic Value Contracts](#basic-value)  
 [Storing Custom Contracts](#storing)  
 [Data Structure Contracts](#data-structure)  
@@ -40,8 +37,7 @@ rho-contracts' maintenance and development, notably
 [Contracts on Prototypes and Constructors](#constructors)  
 [Undocumented Functionality](#undocumented)  
 [Related Work](#related)  
-[License](#license)  
-
+[License](#license)
 
 <a name="installation"/>
 
@@ -53,28 +49,27 @@ rho-contracts' maintenance and development, notably
 
 ## Introduction
 
-*(scroll down to* Tutorial *to skip the intro)*
+_(scroll down to_ Tutorial _to skip the intro)_
 
 `rho-contracts.js` is an implementation of Racket's higher-order contracts library in
 JavaScript. It is an attempt to bring to JavaScript the reliability benefits we
 usually get from static types, namely:
 
-* Types detect bugs early, loudly, and provide clear error messages with
-   precise blame.
+- Types detect bugs early, loudly, and provide clear error messages with
+  precise blame.
 
-* Types establish powerful invariants that guarantee that certain kinds of bugs
-   do not exists in certain sections of the code.
+- Types establish powerful invariants that guarantee that certain kinds of bugs
+  do not exists in certain sections of the code.
 
-* Types act as a checked documentation for the expected input-output type of
-   functions.
+- Types act as a checked documentation for the expected input-output type of
+  functions.
 
-* Types provide a fulcrum against which we can leverage a refactoring.
+- Types provide a fulcrum against which we can leverage a refactoring.
 
 Among the dynamic languages, JavaScript is suffering from the absence of static
 types quite, because of it propensity for implicitly converting everything
 into everything else, and its habit turning anything into a `null` at a moment's
 notice. When I couldn't stand it anymore, I wrote this contract library.
-
 
 <a name="runtime"/>
 
@@ -90,7 +85,7 @@ guarantees as a type system (though not the same.)
 
 ### Higher-order contracts
 
-`rho-contracts.js` is an *higher-order* contract library, as opposed to
+`rho-contracts.js` is an _higher-order_ contract library, as opposed to
 run-of-the-mill assertion library, which means that it provides the ability to
 check assertions on functions received as an arguments, and on function returned from
 functions. When implementing `derive(fn, deltaX)`, it is trivial to add an assert
@@ -107,17 +102,17 @@ var c = require('rho-contracts-fork')
 // derive: returns a function that is the numerically-computed derivative
 //         of the given function.
 var derive =
-
   /* This is the specification: */
-  c.fun( { fn:     c.fun( { x: c.number } ).returns(c.number) },
-         { deltaX: c.number                                   } )
-   .wrap(
-         /* And the implementation goes here: */
-         function(fn, deltaX) {
-           return function(x) {
-            return (fn(x+deltaX/2) - fn(x-deltaX/2))/deltaX
-           }
-         })
+  c
+    .fun({ fn: c.fun({ x: c.number }).returns(c.number) }, { deltaX: c.number })
+    .wrap(
+      /* And the implementation goes here: */
+      function(fn, deltaX) {
+        return function(x) {
+          return (fn(x + deltaX / 2) - fn(x - deltaX / 2)) / deltaX
+        }
+      }
+    )
 ```
 
 In this example, we use `c.fun` to instantiate a contract stating that `derive`
@@ -145,6 +140,7 @@ execution of the body of `derive`, and all its invocations will be checked
 against the contract.
 
 Given the definition for `derive` above:
+
 ```javascript
   > function quadratic(x) { return 5*x*x + 3*x + 2 }
 
@@ -183,15 +179,14 @@ native error, they provide clearer error messages, and they highlight the
 exactly line where the error is, rather than some line deep inside the
 implementation of `derive`.
 
-
 <a name="blame"/>
 
 ### Blame, Blame-correctness, and Blame Tracking
 
 In the last example, when `fn` fails to return a number, which code is
 responsible for the failure? A normal assertion library used as desbribed
-earlier would raise an exception: *assertion failed: expected a number for
-variable `result_from_fn` but got a string*. This exception would contain a
+earlier would raise an exception: _assertion failed: expected a number for
+variable `result_from_fn` but got a string_. This exception would contain a
 stack trace whose first frame would be pointing the blame on the shoulders of
 the implementation of `derive`. But that is incorrect. The error is not that
 `derive` assigned a wrong value to the `result_from_fn` variable. Rather, `fn`
@@ -204,16 +199,15 @@ error messages do indeed makes this clear. The error printed is:
       `fn()` broke its contract. Expected a number, but got '**100.5**'
       for the return value of the call.
 
-`rho-contracts.js` is an implementation of the paper [*Contracts for higher-order
-functions*](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
-ICFP 2002.  The paper formalizes the notion of blame, describes the
+`rho-contracts.js` is an implementation of the paper [_Contracts for higher-order
+functions_](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
+ICFP 2002. The paper formalizes the notion of blame, describes the
 blame-tracking algorithm necessary to report blame correctly, and proves the
 algorithm correct.
 
 This implementation follows the paper closely though without Racket's macro
 system it was not possible to implement the report of blame in term of the name
 of the module interacting. `rho-contracts.js` only reports the function names.
-
 
 <a name="functions-as-values"/>
 
@@ -265,10 +259,10 @@ for the `dx` argument of the call.
 
 ### Additional Documentation
 
-*In a delightful instance of self-reference, the contract library is documented
- and checked using the contract library itself. If reading tutorials is not your thing,
- you may want to instead look at the contracts placed on `rho-contracts.js`'s functions
- and methods by reading [`contract.js`](https://github.com/sefaira/rho-contracts.js/blob/master/src/contract.js) directly.*
+_In a delightful instance of self-reference, the contract library is documented
+and checked using the contract library itself. If reading tutorials is not your thing,
+you may want to instead look at the contracts placed on `rho-contracts.js`'s functions
+and methods by reading [`contract.js`](https://github.com/sefaira/rho-contracts.js/blob/master/src/contract.js) directly._
 
 The contract library is typically `require`'d and bound to a variable called `c`:
 
@@ -293,7 +287,7 @@ ContractError: Expected number, but got 'five'
 ```
 
 The `ContractError` being thrown is a normal JavaScript `Error`. It can be caught
-and rethrown like normal exceptions.  Other useful basic contracts are
+and rethrown like normal exceptions. Other useful basic contracts are
 `c.string`, `c.integer`, `c.bool`, and `c.regexp`.
 
 - `c.string` : accepts only strings, according to Underscore.js's `_.isString()`
@@ -304,7 +298,7 @@ and rethrown like normal exceptions.  Other useful basic contracts are
 For completeness, there are also
 
 - `c.falsy` : accepts only values that selects the `else` branch of a JavaScript
-conditional
+  conditional
 - `c.truthy` : accepts only values that select the `if` branch.
 - `c.value()` : accepts only the given value and nothing else.
 - `c.any` : the contract that accepts everything
@@ -348,7 +342,6 @@ The `c.or()` contracts makes it possible to specify types for the kind of
 heterogeneous functions that are common in idiomatic JavaScript, but that would
 be refused outright by most static type systems (that is so awesome.)
 
-
 <a name="storing"/>
 
 ### Storing Custom Contracts
@@ -375,6 +368,7 @@ created in an application or in a particular module:
 > cc.numberAsAString.check("10.")           // boom
 ContractError: Expected matches(/^[0-9]+(\.[0-9]+)?$/), but got '10.'
 ```
+
 Another option is to make a clone of the contract library at the top of
 your node module and keep the contracts created and used in that module in the clone:
 
@@ -397,7 +391,6 @@ before storing them:
 > c.numberAsString.check("o_0.")           // boom
 ContractError: Expected numberAsString, but got 'o_0.'
 ```
-
 
 <a name="data-structure"/>
 
@@ -477,9 +470,9 @@ Usually, the implementation, the contract, and the wrapped function are all
 created at once in one expression, like this:
 
 ```javascript
-var square = c.fun( { x: c.number } )
-              .wrap(
-                function (x) { return x * x } )
+var square = c.fun({ x: c.number }).wrap(function(x) {
+  return x * x
+})
 ```
 
 Each argument's contract is specified in the call to `c.fun()` using a hash
@@ -526,9 +519,9 @@ because JavaScript does maintain the order of fields in hashes.
 Contracts returned by `c.fun()` have three additional methods not found on other
 contracts:
 
-* `c.fun().returns(c.number)` : This will check that the function returns only numbers.
+- `c.fun().returns(c.number)` : This will check that the function returns only numbers.
 
-* `c.fun().extraArgs(c.array(c.number))` : This will allow a variable number of
+- `c.fun().extraArgs(c.array(c.number))` : This will allow a variable number of
   arguments, so long as they are all numbers. Generally, the contract passed to
   `.extraArgs()` will be matched against an array containing the extra arguments
   beyond those specified explicitly. This opens the possibility of checking
@@ -552,13 +545,13 @@ ContractError: Expected string, but got 105
 for the return value of the call.
 ```
 
-* `c.fun().thisArg( ---- )` : We mention `.thisArg()` for completeness. This contract
+- `c.fun().thisArg( ---- )` : We mention `.thisArg()` for completeness. This contract
   checks that the method was invoked on an object of the right form. (Note, this
   method name is not called `this` to avoid clashing with the JavaScript reserved
   word `this`). However, usages of `c.fun().thisArg` are rare. It is more customary
-  to use the `.method()` method on object contacts (See *Contracts on Objects*
-  below.) `c.fun().thisArg` is useful when using the *Apply Invocation Pattern*
-  described in Chapter 4 of Douglas' Crockford' *JavaScript, The Good Parts*.
+  to use the `.method()` method on object contacts (See _Contracts on Objects_
+  below.) `c.fun().thisArg` is useful when using the _Apply Invocation Pattern_
+  described in Chapter 4 of Douglas' Crockford' _JavaScript, The Good Parts_.
 
 ```javascript
 > var makeStatus = function(string) { return { status:  string } }
@@ -575,8 +568,6 @@ for the return value of the call.
 ContractError: Field `status` required, got { statosstratos: 'I have a typo' }
 for this `this` argument of the call.
 ```
-
-
 
 <a name="optargs"/>
 
@@ -603,8 +594,6 @@ argument must be optional as well.
 > incrementIt(10, 20) // too many arguments!
 ContractError: Too many arguments, expected at most 1 but got 2
 ```
-
-
 
 <a name="wrap-vs-check"/>
 
@@ -681,16 +670,14 @@ DEBUG: NaN
 The `.wrap()` method wraps recursively all JavaScript's data structures, array,
 hashes, tuples, and objects.
 
-
-
 <a name="objects"/>
 
 ### Object Contracts
 
 Since objects in JavaScript are constructed out of normal hash tables containing
 normal functions, contracts on objects follow the usage described in the previous
-three sections *Data Structure Contracts*, *Contracts on Functions* and *Wrapping
-vs Checking*.
+three sections _Data Structure Contracts_, _Contracts on Functions_ and _Wrapping
+vs Checking_.
 
 ```javascript
 > String.prototype.repeat = function( num ) {   // A helper function on
@@ -780,12 +767,11 @@ When using this better definition of `c.animal`, the error is caught as it shoul
  for this `this` argument of the call.
 ```
 
-
 `rho-contracts.js` provides three additional pieces of functionality made specifically for
 object contracts.
 
 - `c.optional()` : Contracts marked "optional" by the `c.optional()` function (as
-  discussed earlier in the *Contracts for Optional Arguments* section) are also
+  discussed earlier in the _Contracts for Optional Arguments_ section) are also
   used to specify optional fields of objects. A field is considered missing if
   is not set, or if it is set to null. All these are OK.
 
@@ -832,8 +818,6 @@ ContractError: Field `carModel` required, got { trunkSize: 9.8 }
 
 - .strict on tuples
 
-
-
 <a name="lightweight"/>
 
 ### A Lightweight Notation
@@ -848,25 +832,24 @@ call `toContract` explicitly, like this:
 
 ```javascript
 cc.kidPark = toContract({
-    name: c.string,
-    acres: c.number,
-    playunit: {
-        junglebars: c.bool,
-        slides: c.number,
-        ladders: [{
-            color: c.string,
-            size: c.string
-        }]
-    }
-
+  name: c.string,
+  acres: c.number,
+  playunit: {
+    junglebars: c.bool,
+    slides: c.number,
+    ladders: [
+      {
+        color: c.string,
+        size: c.string,
+      },
+    ],
+  },
 })
-
 ```
-
 
 <a name="constructors"/>
 
-### Contracts on Prototypes and Constructors ###
+### Contracts on Prototypes and Constructors
 
 To check functions that are intended to be invoked with `new`, aka
 "constructor" functions, use the `constructs` method on function
@@ -874,28 +857,29 @@ contracts.
 
 ```javascript
 function CounterImpl(x) {
-  this.x = x;
+  this.x = x
   // return this; // return statement omitted
 }
 
-CounterImpl.prototype.inc = function (i) {
-  this.x += i;
-};
+CounterImpl.prototype.inc = function(i) {
+  this.x += i
+}
 
-var Counter = c.fun({x: c.number})
-               .constructs({
-                 inc: c.fun({i: c.number})
-               })
-               .returns(c.object({x: c.number}))
-               .wrap(CounterImpl);
+var Counter = c
+  .fun({ x: c.number })
+  .constructs({
+    inc: c.fun({ i: c.number }),
+  })
+  .returns(c.object({ x: c.number }))
+  .wrap(CounterImpl)
 
-var instance = new Counter(5);
-instance.should.have.property('inc');
-instance.should.not.have.ownProperty('inc');
+var instance = new Counter(5)
+instance.should.have.property('inc')
+instance.should.not.have.ownProperty('inc')
 
 // and also both of these hold:
-instance.should.be.instanceof(Counter);
-instance.should.be.instanceof(CounterImpl);
+instance.should.be.instanceof(Counter)
+instance.should.be.instanceof(CounterImpl)
 ```
 
 As expected, the method `inc` placed on `CounterImpl.prototype` is
@@ -908,8 +892,7 @@ The argument to `constructs` specifies the contracts on the
 `prototype` of the function. Unless a different `thisArg` has been set
 on the contract, `constructs` threats these functions as methods of
 class, meaning that it checks that the `this` argument is always bound
-to an instance of the constructor. For example, `instance.inc.call({x:
-5}, 1)` fails since `{x: 5}` is not `instanceof Counter`.
+to an instance of the constructor. For example, `instance.inc.call({x: 5}, 1)` fails since `{x: 5}` is not `instanceof Counter`.
 
 `constructs` is not strict, in the sense that additional fields on the
 constructor's `prototype`, but not present in the contract, will
@@ -923,51 +906,51 @@ field of the prototype continue to point to the original unwrapped
 function the equality `new Counter(5).constructor === Counter` no
 longer holds.
 
-
 Though not the best pattern, constructor functions can be wrapped
 normally with function contracts, like this:
 
 ```javascript
 function CounterImpl(x) {
-  this.x = x;
-  return this; // see below
+  this.x = x
+  return this // see below
 }
 
-CounterImpl.prototype.inc = function (i) {
-  this.x += i;
-};
+CounterImpl.prototype.inc = function(i) {
+  this.x += i
+}
 
-var Counter = c.fun({x: c.number})
-    .returns(c.object({
-        inc: c.fun({i: c.number}),
-        x: c.number
-    }))
-    .wrap(CounterImpl);
+var Counter = c
+  .fun({ x: c.number })
+  .returns(
+    c.object({
+      inc: c.fun({ i: c.number }),
+      x: c.number,
+    })
+  )
+  .wrap(CounterImpl)
 
-var instance = new Counter(5);
-instance.x.should.eql(5);
-instance.inc(2);
-instance.x.should.eql(7);
+var instance = new Counter(5)
+instance.x.should.eql(5)
+instance.inc(2)
+instance.x.should.eql(7)
 ```
 
 However, this usage has two downsides:
 
-* First, if the constructor function omits `return` and relies on
+- First, if the constructor function omits `return` and relies on
   the semantic of `new` invocations to automatically return the newly
   constructed object, contracts on return values (placed with
   `returns`) will fail.
-* Second, the common pattern of placing methods on the prototype in
+- Second, the common pattern of placing methods on the prototype in
   order to share them across instances fails to achieve the intended
   memory savings since every newly constructed instance receives a
   contract-checking shells for the methods present on the prototype.
 
 The `constructs` method shown above avoids both these problems.
 
-
-
 <a name="undocumented"/>
 
-## Functionality in Contract.js ##
+## Functionality in Contract.js
 
 Read about these functions in [`contract.js`](https://github.com/sefaira/rho-contracts.js/blob/master/src/contract.js) directly.
 
@@ -994,14 +977,13 @@ And also
 - `quacksLike`
 - `silentAnd`
 
-
 <a name="related"/>
 
-## Related Work ##
+## Related Work
 
-- `rho-contracts.js` is an implementation of the paper [*Contracts for higher-order
-functions*](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
-ICFP 2002.
+- `rho-contracts.js` is an implementation of the paper [_Contracts for higher-order
+  functions_](http://dl.acm.org/citation.cfm?id=581484), by Findler and Felleisen,
+  ICFP 2002.
 
 - The original and best implementation of the paper's ideas is
   [racket/contract](http://doc.racket-lang.org/reference/contracts.html?q=contract)
@@ -1022,21 +1004,16 @@ ICFP 2002.
   possibility of extensions that's available and its type namespace is separate
   from the JavaScript namespace and module machinery.
 
-
-- [jsContract](http://kinsey.no/blog/index.php/2010/02/03/jscontract-code-contracts-for-javascript/),
+* [jsContract](http://kinsey.no/blog/index.php/2010/02/03/jscontract-code-contracts-for-javascript/),
   [cerny.js](http://www.cerny-online.com/cerny.js/documentation/guides/contracts),
   are good-old (bad-old?) Eiffel-style contract libraries. True to their Eiffel
   roots, they require lots of code for little benefit, in particular, they cannot
   check higher-order functions, cannot separate specification from
   implementation. See Findler and Felleisen for a more thorough comparison.
 
-
-
-
-
 <a name="license"/>
 
-## License ##
+## License
 
 This library was created at Sefaira.com, originally for internal use. We are
 releasing it to the open source community under the Mozilla open-source license
