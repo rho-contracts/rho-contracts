@@ -17,14 +17,14 @@
     "mustache": "^3.0.0",
     "should": "1.2.2"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/bodylabs/rho-contracts-fork.git"
+  "engines": {
+    "node": ">= 8"
   },
+  "repository": "rho-contracts/rho-contracts",
   "readmeFilename": "README.md",
   "gitHead": "aef2505b61452b8322c0d5ec57144190ac09f175",
   "bugs": {
-    "url": "https://github.com/bodylabs/rho-contracts.js/issues"
+    "url": "https://github.com/rho-contracts/rho-contracts/issues"
   },
   "scripts": {
     "test": "mocha src/*.spec.js",
