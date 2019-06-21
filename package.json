@@ -15,6 +15,7 @@
     "marked": "^0.5.1",
     "mocha": "^5.2.0",
     "mustache": "^3.0.0",
+    "prettier": "^1.18.2",
     "should": "1.2.2"
   },
   "engines": {
@@ -22,13 +23,14 @@
   },
   "repository": "rho-contracts/rho-contracts",
   "readmeFilename": "README.md",
-  "gitHead": "aef2505b61452b8322c0d5ec57144190ac09f175",
   "bugs": {
     "url": "https://github.com/rho-contracts/rho-contracts/issues"
   },
   "scripts": {
     "test": "mocha src/*.spec.js",
-    "lint": "jshint *.js"
+    "lint": "jshint *.js",
+    "prettier": "prettier --write \"**/*.@(js|md|json|yml)\"",
+    "prettier:check": "prettier --check \"**/*.@(js|md|json|yml)\""
   },
   "author": "Guillaume Marceau <guillaume.marceau@bodylabs.com> (http://bodylabs.com/)",
   "license": "Mozilla Public License Version 2.0"

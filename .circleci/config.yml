@@ -15,12 +15,12 @@ jobs:
           name: Run tests
           command: npm run test
 
-      - run:
-          name: Check lint
-          command: npm run lint
-          when: always
-
       # - run:
-      #     name: Check prettier
-      #     command: npm run prettier-check
+      #     name: Check lint
+      #     command: npm run lint
       #     when: always
+
+      - run:
+          name: Check prettier
+          command: npm run prettier:check
+          when: always
