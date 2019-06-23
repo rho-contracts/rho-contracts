@@ -10,9 +10,9 @@
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@rho-contracts/rho-contracts.svg?style=flat-square)][bundlephobia]
 [![code style](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)][prettier]
 
-[npm]: https://npmjs.com/anafanafo
-[build]: https://circleci.com/gh/metabolize/anafanafo/tree/master
-[bundlephobia]: https://bundlephobia.com/result?p=anafanafo
+[npm]: https://npmjs.com/@rho-contracts/rho-contracts
+[build]: https://circleci.com/gh/rho-contracts/rho-contracts/tree/master
+[bundlephobia]: https://bundlephobia.com/result?p=@rho-contracts/rho-contracts
 [prettier]: https://prettier.io/
 
 Higher-order contracts and runtime schema checking for JavaScript
