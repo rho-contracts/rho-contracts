@@ -4,33 +4,44 @@
 
 # rho-contracts
 
+[![version](https://img.shields.io/npm/v/@rho-contracts/rho-contracts.svg?style=flat-square)][npm]
+[![license](https://img.shields.io/npm/l/@rho-contracts/rho-contracts.svg?style=flat-square)][npm]
+[![build](https://img.shields.io/circleci/project/github/rho-contracts/rho-contracts.svg?style=flat-square)][build]
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@rho-contracts/rho-contracts.svg?style=flat-square)][bundlephobia]
+[![code style](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)][prettier]
+
+[npm]: https://npmjs.com/@rho-contracts/rho-contracts
+[build]: https://circleci.com/gh/rho-contracts/rho-contracts/tree/master
+[bundlephobia]: https://bundlephobia.com/result?p=@rho-contracts/rho-contracts
+[prettier]: https://prettier.io/
+
 Higher-order contracts and runtime schema checking for JavaScript
 
 These can provide Racket-style contracts which wrap JavaScript function calls,
 enforcing and documenting the pre- and postconditions.
 
-## Table of Content
+## Table of Contents
 
-[Installation](#installation)
-[Introduction](#introduction)
-[Run-time vs Compile-time](#runtime)
-[Higher-order contracts](#higher-order)
-[Blame, Blame-correctness, and Blame Tracking](#blame)
-[Contracts on Functions-as-Values](#functions-as-values)
-[Tutorial](#tutorial)
-[Additional Documentation](#tutorial)
-[Basic Value Contracts](#basic-value)
-[Storing Custom Contracts](#storing)
-[Data Structure Contracts](#data-structure)
-[Contracts on Functions](#functions)
-[Contracts for Optional Arguments](#optargs)
-[Wrapping vs Checking](#wrap-vs-check)
-[Object Contracts](#objects)
-[A Lightweight Notation](#lightweight)
-[Contracts on Prototypes and Constructors](#constructors)
-[Undocumented Functionality](#undocumented)
-[Related Work](#related)
-[License](#license)
+- [Installation](#installation)
+- [Introduction](#introduction)
+- [Run-time vs Compile-time](#runtime)
+- [Higher-order contracts](#higher-order)
+- [Blame, Blame-correctness, and Blame Tracking](#blame)
+- [Contracts on Functions-as-Values](#functions-as-values)
+- [Tutorial](#tutorial)
+- [Additional Documentation](#tutorial)
+- [Basic Value Contracts](#basic-value)
+- [Storing Custom Contracts](#storing)
+- [Data Structure Contracts](#data-structure)
+- [Contracts on Functions](#functions)
+- [Contracts for Optional Arguments](#optargs)
+- [Wrapping vs Checking](#wrap-vs-check)
+- [Object Contracts](#objects)
+- [A Lightweight Notation](#lightweight)
+- [Contracts on Prototypes and Constructors](#constructors)
+- [Undocumented Functionality](#undocumented)
+- [Related Work](#related)
+- [License](#license)
 
 <a name="installation"/>
 
