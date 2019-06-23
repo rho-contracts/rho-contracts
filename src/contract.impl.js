@@ -433,6 +433,7 @@ function or(/* ... */) {
 
   self.nestedChecker = function(data, next, context) {
     const self = this
+    const allContracts = _.union(self.contracts, self.wrappingContracts)
     const exceptions = []
 
     const oldFail = context.fail
