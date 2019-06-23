@@ -4,97 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { expect, Assertion } = require('chai')
-const should = require('should')
-const __ = require('underscore')
-const c = require('./contract')
 const fs = require('fs')
+const { expect, Assertion } = require('chai')
+const c = require('./contract')
 const errors = require('./contract-errors')
-
-Assertion.addMethod('passValue', function(goodValue) {
-  const obj = this._obj
-
-  // first, our instanceof check, shortcut
-  new Assertion(this._obj).to.be.instanceof(c.Contract)
-
-  new Assertion(this._obj.check(goodValue)).to.equal(goodValue)
-})
-
-// eslint-disable-next-line no-extend-native
-Array.prototype.toString = function() {
-  return `[${this.join(', ')}]`
-}
-
-const oldToString = Object.prototype.toString
-// eslint-disable-next-line no-extend-native
-Object.prototype.toString = function() {
-  const that = this
-  if (__.isObject(that))
-    return `{ ${__.chain(that)
-      .keys()
-      .map(function(k) {
-        return `${k}: ${that[k]}`
-      })
-      .value()
-      .join(', ')} }`
-  else return oldToString.call(that)
-}
-
-should.Assertion.prototype.throwError = function(message) {
-  this['throw'](message)
-}
-
-should.Assertion.prototype.throwContract = function(message) {
-  this.throwType(errors.ContractError, message)
-}
-
-should.Assertion.prototype.throwType = function(type, message) {
-  const fn = this.obj
-  let err = {}
-  let errorInfo = ''
-  let caught
-  let ok
-
-  try {
-    const v = fn()
-    caught = false
-    ok = false
-    errorInfo = `but the function returned ${v}`
-  } catch (e) {
-    err = e
-    caught = true
-  }
-
-  if (caught) {
-    // console.log('\ncontracts/contract.spec.js Line 49:\n'+err+'\n'+err.renderedStack+'\n\n');
-    if (err.name !== type.name) {
-      ok = false
-      errorInfo = `but the error was ${err}`
-    } else if (!message) {
-      ok = true
-    } else if (typeof message === 'string') {
-      ok = message === err.message
-      errorInfo = `with a message exactly '${message}', but got '${err.message}'`
-    } else if (message instanceof RegExp) {
-      ok = message.test(err.message)
-      errorInfo = `with a message matching ${message}', but got '${err.message}'`
-    } else {
-      throw new Error('should.throw expects a string or a regexp')
-    }
-  }
-
-  this.assert(
-    ok,
-    function() {
-      return `expected a ${type.name} to be thrown ${errorInfo}`
-    },
-    function() {
-      return `expected no ${type.name} to be thrown, got "${err.message}"`
-    }
-  )
-
-  return this
-}
 
 describe('toContract', function() {
   it('passes contracts', function() {
@@ -139,9 +52,10 @@ describe('toContract', function() {
     }
     expect(kidPark.check(example)).to.deep.equal(example)
     example.playunit.ladders[1].size = 0
-    ;(function() {
-      kidPark.check(example)
-    }.should.throwContract(/Expected string/))
+    expect(() => kidPark.check(example)).to.throw(
+      errors.ContractError,
+      /^Expected string/
+    )
   })
   it('wraps arrays', function() {
     expect(c.toContract([c.any])).to.be.an.instanceof(c.Contract)
@@ -159,14 +73,13 @@ describe('any', function() {
 
 describe('nothing', function() {
   it('rejects 5', function() {
-    ;(function() {
-      c.nothing.check(5)
-    }.should.throwContract())
+    expect(() => c.nothing.check(5)).to.throw(errors.ContractError)
   })
   it('report check name', function() {
-    ;(function() {
-      c.nothing.wrap(5, 'test')
-    }.should.throwContract(/test/))
+    expect(() => c.nothing.wrap(5, 'test')).to.throw(
+      errors.ContractError,
+      /test/
+    )
   })
 })
 
@@ -175,9 +88,7 @@ describe('value', function() {
     expect(c.value(5)).to.passValue(5)
   })
   it('reject different', function() {
-    ;(function() {
-      c.value(5).check(6)
-    }.should.throwContract())
+    expect(() => c.value(5).check(6)).to.throw(errors.ContractError)
   })
 })
 
@@ -186,9 +97,7 @@ describe('string', function() {
     expect(c.string).to.passValue('asd')
   })
   it('reject different', function() {
-    ;(function() {
-      c.string.check(6)
-    }.should.throwContract())
+    expect(() => c.string.check(6)).to.throw(errors.ContractError)
   })
 })
 
@@ -197,9 +106,7 @@ describe('Date', function() {
     expect(c.date).to.passValue(new Date())
   })
   it('reject different', function() {
-    ;(function() {
-      c.date.check(6)
-    }.should.throwContract())
+    expect(() => c.date.check(6)).to.throw(errors.ContractError)
   })
 })
 
@@ -210,9 +117,10 @@ describe('isA', function() {
   })
 
   it('rejects different', function() {
-    ;(function() {
-      c.isA(ExampleImpl).check(new Date())
-    }.should.throwContract(/isA\(ExampleImpl\)/))
+    expect(() => c.isA(ExampleImpl).check(new Date())).to.throw(
+      errors.ContractError,
+      /isA\(ExampleImpl\)/
+    )
   })
 })
 
@@ -227,14 +135,14 @@ describe('and', function() {
     expect(c.and(c.string, c.value('asd'))).to.passValue('asd')
   })
   it('fails first', function() {
-    ;(function() {
-      c.and(c.string, c.value('asd')).check(5)
-    }.should.throwContract())
+    expect(() => c.and(c.string, c.value('asd')).check(5)).to.throw(
+      errors.ContractError
+    )
   })
   it('fails second', function() {
-    ;(function() {
-      c.and(c.string, c.value('asd')).check('aaa')
-    }.should.throwContract())
+    expect(() => c.and(c.string, c.value('asd')).check('aaa')).to.throw(
+      errors.ContractError
+    )
   })
 })
 
@@ -246,14 +154,14 @@ describe('or', function() {
     expect(c.or(c.string, c.value(6))).to.passValue(6)
   })
   it('fails', function() {
-    ;(function() {
-      c.or(c.string, c.value(6)).check(0)
-    }.should.throwContract())
+    expect(() => c.or(c.string, c.value(6)).check(0)).to.throw(
+      errors.ContractError
+    )
   })
   it('two fn cannot be wrapped', function() {
-    ;(function() {
+    expect(() =>
       c.or(c.fn(), c.fn()).wrap(function() {}, function() {})
-    }.should.throwError(/at most one/))
+    ).to.throw(/at most one/)
   })
 })
 
@@ -262,22 +170,16 @@ describe('matches', function() {
     expect(c.matches(/x+/)).to.passValue('---xxxxx  ')
   })
   it('fail', function() {
-    ;(function() {
-      c.matches(/x+/).check('---  ')
-    }.should.throwContract())
+    expect(() => c.matches(/x+/).check('---  ')).to.throw(errors.ContractError)
   })
   it('does not coerce null', function() {
-    ;(function() {
-      c.matches(/null/).check(null)
-    }.should.throwContract())
+    expect(() => c.matches(/null/).check(null)).to.throw(errors.ContractError)
   })
 })
 
 describe('array', function() {
   it('fails non-arrays', function() {
-    ;(function() {
-      c.array(c.any).check(5)
-    }.should.throwContract())
+    expect(() => c.array(c.any).check(5)).to.throw(errors.ContractError)
   })
   it('passes empty', function() {
     expect(c.array(c.any)).to.passValue([])
@@ -286,35 +188,31 @@ describe('array', function() {
     expect(c.array(c.value(5))).to.passValue([5, 5])
   })
   it('fails first', function() {
-    ;(function() {
-      c.array(c.value(5)).check([10, 5])
-    }.should.throwContract())
+    expect(() => c.array(c.value(5)).check([10, 5])).to.throw(
+      errors.ContractError
+    )
   })
   it('fails second', function() {
-    ;(function() {
-      c.array(c.value(5)).check([5, 10])
-    }.should.throwContract())
+    expect(() => c.array(c.value(5)).check([5, 10])).to.throw(
+      errors.ContractError
+    )
   })
   it('passes nested', function() {
     expect(c.array(c.array(c.value(5)))).to.passValue([[5], [5, 5]])
   })
   it('fails nested', function() {
-    ;(function() {
-      c.array(c.array(c.value(5))).check([[5], [5, 10]])
-    }.should.throwContract())
+    expect(() => c.array(c.array(c.value(5))).check([[5], [5, 10]])).to.throw(
+      errors.ContractError
+    )
   })
 })
 
 describe('tuple', function() {
   it('fails non-arrays', function() {
-    ;(function() {
-      c.tuple(c.any).check(5)
-    }.should.throwContract())
+    expect(() => c.tuple(c.any).check(5)).to.throw(errors.ContractError)
   })
   it('fails empty', function() {
-    ;(function() {
-      c.tuple(c.any).check([])
-    }.should.throwContract())
+    expect(() => c.tuple(c.any).check([])).to.throw(errors.ContractError)
   })
   it('passes simple', function() {
     expect(c.tuple(c.value(5), c.value(10))).to.passValue([5, 10])
@@ -323,14 +221,14 @@ describe('tuple', function() {
     expect(c.tuple(c.value(5), c.value(10))).to.passValue([5, 10, 'x'])
   })
   it('fails first', function() {
-    ;(function() {
-      c.tuple(c.value(5), c.value(10)).check([10, 5])
-    }.should.throwContract())
+    expect(() => c.tuple(c.value(5), c.value(10)).check([10, 5])).to.throw(
+      errors.ContractError
+    )
   })
   it('fails second', function() {
-    ;(function() {
-      c.tuple(c.value(5), c.value(10)).check([5, 20])
-    }.should.throwContract())
+    expect(() => c.tuple(c.value(5), c.value(10)).check([5, 20])).to.throw(
+      errors.ContractError
+    )
   })
   it('passes nested', function() {
     expect(
@@ -338,13 +236,11 @@ describe('tuple', function() {
     ).to.passValue(['a', [5, 'b'], 5])
   })
   it('fails nested', function() {
-    ;(function() {
-      c.tuple(c.string, c.tuple(c.value(5), c.string), c.number).check([
-        'a',
-        [5, 10],
-        5,
-      ])
-    }.should.throwContract())
+    expect(() =>
+      c
+        .tuple(c.string, c.tuple(c.value(5), c.string), c.number)
+        .check(['a', [5, 10], 5])
+    ).to.throw(errors.ContractError)
   })
 })
 
@@ -353,17 +249,18 @@ describe('hash', function() {
     expect(c.hash(c.string)).to.passValue({ x: 'aaa', y: 'bbb' })
   })
   it('fails', function() {
-    ;(function() {
-      c.hash(c.string).check({ x: 'aaa', y: 5 })
-    }.should.throwContract())
+    expect(() => c.hash(c.string).check({ x: 'aaa', y: 5 })).to.throw(
+      errors.ContractError
+    )
   })
   it('wrap wraps fields and fails', function() {
-    ;(function() {
-      const x = { thk: function() {} }
-      c.hash(c.fn())
+    const x = { thk: function() {} }
+    expect(() =>
+      c
+        .hash(c.fn())
         .wrap(x)
         .thk(5)
-    }.should.throwContract(/Wrong number/))
+    ).to.throw(errors.ContractError, /Wrong number/)
   })
 })
 
@@ -379,9 +276,7 @@ describe('object regression', function() {
 
 describe('object', function() {
   it('fails non-objects', function() {
-    ;(function() {
-      c.object().check(5)
-    }.should.throwContract())
+    expect(() => c.object().check(5)).to.throw(errors.ContractError)
   })
   it('passes empty', function() {
     const value = {}
@@ -392,14 +287,14 @@ describe('object', function() {
     expect(c.object({ x: c.value(5) }).check(value)).to.equal(value)
   })
   it('fails first', function() {
-    ;(function() {
+    expect(() =>
       c.object({ x: c.value(5), y: c.value(10) }).check({ x: 10, y: 10 })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
   it('fails second', function() {
-    ;(function() {
+    expect(() =>
       c.object({ x: c.value(5), y: c.value(10) }).check({ x: 5, y: 2 })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
   it('passes nested', function() {
     const value = { x: { y: 5 } }
@@ -408,19 +303,19 @@ describe('object', function() {
     )
   })
   it('fails nested', function() {
-    ;(function() {
+    expect(() =>
       c.object({ x: c.object({ y: c.value(5) }) }).check({ x: { y: 10 } })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
   it('fails missing field', function() {
-    ;(function() {
+    expect(() =>
       c.object({ x: c.value(5), y: c.value(10) }).check({ x: 5, z: 10 })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
   it('fails missing field, nested', function() {
-    ;(function() {
+    expect(() =>
       c.object({ x: c.object({ y: c.value(5) }) }).check({ x: { z: 10 } })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
 
   describe('option field', function() {
@@ -449,36 +344,38 @@ describe('object', function() {
       ).to.equal(value)
     })
     it('rejects when mismatched', function() {
-      ;(function() {
+      expect(() =>
         c.object({ x: c.value(5), y: c.optional(c.value(10)) }).check({
           x: 5,
           y: 5,
         })
-      }.should.throwContract())
+      ).to.throw(errors.ContractError)
     })
     it('rejects when falsy', function() {
-      ;(function() {
+      expect(() =>
         c.object({ x: c.value(5), y: c.optional(c.value(10)) }).check({
           x: 5,
           y: '',
         })
-      }.should.throwContract())
+      ).to.throw(errors.ContractError)
     })
     it('rejects when NaN', function() {
-      ;(function() {
+      expect(() =>
         c.object({ x: c.value(5), y: c.optional(c.value(10)) }).check({
           x: 5,
           y: 0 / 0,
         })
-      }.should.throwContract())
+      ).to.throw(errors.ContractError)
     })
     it('nested and mismatched', function() {
-      ;(function() {
-        c.object({
-          x: c.value(5),
-          y: c.optional(c.object({ z: c.value(10) })),
-        }).check({ x: 5, y: { z: 0 } })
-      }.should.throwContract())
+      expect(() =>
+        c
+          .object({
+            x: c.value(5),
+            y: c.optional(c.object({ z: c.value(10) })),
+          })
+          .check({ x: 5, y: { z: 0 } })
+      ).to.throw(errors.ContractError)
     })
   })
 
@@ -492,12 +389,13 @@ describe('object', function() {
   })
 
   it('wrap wraps fields and fails', function() {
-    ;(function() {
-      const x = { thk: function() {} }
-      c.object({ thk: c.fn() })
+    const x = { thk: function() {} }
+    expect(() =>
+      c
+        .object({ thk: c.fn() })
         .wrap(x)
         .thk(5)
-    }.should.throwContract(/Wrong number/))
+    ).to.throw(errors.ContractError, /Wrong number/)
   })
 
   it('wrap maintains prototypes', function() {
@@ -517,11 +415,12 @@ describe('object', function() {
     })
   })
   it('extends fails', function() {
-    ;(function() {
-      c.object({ x: c.number })
+    expect(() =>
+      c
+        .object({ x: c.number })
         .extend({ y: c.string })
         .check({ x: 5 })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
 })
 
@@ -549,90 +448,101 @@ describe('strict', function() {
     ).to.passValue([10])
   })
   it('fails an object', function() {
-    ;(function() {
-      c.object({ x: c.value(10) })
+    expect(() =>
+      c
+        .object({ x: c.value(10) })
         .strict()
         .check({ x: 10, y: 20 })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
   it("fails an object's field", function() {
-    ;(function() {
-      c.object({ x: c.value(10) })
+    expect(() =>
+      c
+        .object({ x: c.value(10) })
         .strict()
         .check({ x: 20 })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
   it('fails an object, multiple', function() {
-    ;(function() {
-      c.object({ x: c.value(10) })
+    expect(() =>
+      c
+        .object({ x: c.value(10) })
         .strict()
         .check({ x: 10, y: 20, z: 30 })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
   it('fails a nested object', function() {
-    ;(function() {
-      c.object({ x: c.object({ y: c.value(10) }).strict() })
+    expect(() =>
+      c
+        .object({ x: c.object({ y: c.value(10) }).strict() })
         .strict()
         .check({ x: { y: 10, z: 20 } })
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
   it('fails a tuple', function() {
-    ;(function() {
-      c.tuple(c.value(10))
+    expect(() =>
+      c
+        .tuple(c.value(10))
         .strict()
         .check([10, 20])
-    }.should.throwContract())
+    ).to.throw(errors.ContractError)
   })
 
   it('composes with extend', function() {
-    ;(function() {
-      c.object({ x: c.number })
+    expect(() =>
+      c
+        .object({ x: c.number })
         .strict()
         .extend({ y: c.number })
         .check({ x: 5 })
-    }.should.throwContract(/required/))
-    ;(function() {
-      c.object({ x: c.number })
+    ).to.throw(errors.ContractError, /required/)
+    expect(() =>
+      c
+        .object({ x: c.number })
         .strict()
         .extend({ y: c.number })
         .check({ x: 5, y: 'asd' })
-    }.should.throwContract())
-    ;(function() {
-      c.object({ x: c.number })
+    ).to.throw(errors.ContractError)
+    expect(
+      c
+        .object({ x: c.number })
         .strict()
         .extend({ y: c.number })
-        .check({ x: 5, y: 6 })
-    }.should.ok)
-    ;(function() {
-      c.object({ x: c.number })
+    ).to.passValue({ x: 5, y: 6 })
+    expect(() =>
+      c
+        .object({ x: c.number })
         .strict()
         .extend({ y: c.number })
         .check({ x: 5, y: 6, z: 7 })
-    }.should.throwContract(/extra field/))
-    ;(function() {
-      c.object({ x: c.number })
+    ).to.throw(errors.ContractError, /extra field/)
+    expect(() =>
+      c
+        .object({ x: c.number })
         .extend({ y: c.number })
         .strict()
         .check({ x: 5 })
-    }.should.throwContract(/required/))
-    ;(function() {
-      c.object({ x: c.number })
+    ).to.throw(errors.ContractError, /required/)
+    expect(() =>
+      c
+        .object({ x: c.number })
         .extend({ y: c.number })
         .strict()
         .check({ x: 5, y: 'asd' })
-    }.should.throwContract())
-    ;(function() {
-      c.object({ x: c.number })
+    ).to.throw(errors.ContractError)
+    expect(
+      c
+        .object({ x: c.number })
         .extend({ y: c.number })
         .strict()
-        .check({ x: 5, y: 6 })
-    }.should.ok)
-    ;(function() {
-      c.object({ x: c.number })
+    ).to.passValue({ x: 5, y: 6 })
+    expect(() =>
+      c
+        .object({ x: c.number })
         .extend({ y: c.number })
         .strict()
         .check({ x: 5, y: 6, z: 7 })
-    }.should.throwContract(/extra field/))
+    ).to.throw(errors.ContractError, /extra field/)
   })
 })
 
@@ -663,9 +573,10 @@ describe('constructs', function() {
   })
 
   it('refuses wrong constructor arguments', function() {
-    ;(function() {
-      new Example('boom')
-    }.should.throwContract(/ExampleImpl[\s\S]+argument/))
+    expect(() => new Example('boom')).to.throw(
+      errors.ContractError,
+      /ExampleImpl[\s\S]+argument/
+    )
   })
 
   it('refuses incorrectly constructed objects', function() {
@@ -674,15 +585,17 @@ describe('constructs', function() {
       .constructs({})
       .returns(c.object({ x: c.string }))
       .wrap(ExampleImpl)
-    ;(function() {
-      new Wrap(4)
-    }.should.throwContract(/ExampleImpl[\s\S]+ string, but got 4/))
+    expect(() => new Wrap(4)).to.throw(
+      errors.ContractError,
+      /ExampleImpl[\s\S]+ string, but got 4/
+    )
   })
 
   it('produces an object that fails on bad input', function() {
-    ;(function() {
-      new Example(5).inc('five')
-    }.should.throwContract(/inc()[\s\S]+number/))
+    expect(() => new Example(5).inc('five')).to.throw(
+      errors.ContractError,
+      /inc()[\s\S]+number/
+    )
   })
 
   it('fields omitted from the contract can be used normally', function() {
@@ -692,14 +605,15 @@ describe('constructs', function() {
   })
 
   it('detects missing fields', function() {
-    ;(function() {
-      c.fun()
+    expect(() =>
+      c
+        .fun()
         .constructs({
           inc: c.fun({ i: c.number }),
           _dec: c.fun({ i: c.number }),
         })
         .wrap(function Blank() {})
-    }.should.throwContract(/are missing[\s\S]+inc, _dec/))
+    ).to.throw(errors.ContractError, /are missing[\s\S]+inc, _dec/)
   })
 
   it('detects inherited fields', function() {
@@ -773,9 +687,9 @@ describe('constructs', function() {
     it('produces a usable object with shared methods', function() {
       const instance = new SubExample(10)
       expect(instance).to.have.property('pair')
-      instance.should.not.have.ownProperty('pair')
+      expect(instance.hasOwnProperty('pair')).to.be.false
       expect(instance).to.have.property('inc')
-      instance.should.not.have.ownProperty('inc')
+      expect(instance.hasOwnProperty('inc')).to.be.false
       expect(instance.pair()).to.deep.equal([10, 10])
     })
     it('allows use of methods from up the chain', function() {
@@ -785,12 +699,14 @@ describe('constructs', function() {
     })
     it('it detects misuses of methods from up the chain', function() {
       const instance = new SubExample(10)
-      ;(function() {
-        instance.inc('nope')
-      }.should.throwContract(/number.*nope/))
-      ;(function() {
-        instance.pair(20)
-      }.should.throwContract(/Wrong number of arg/))
+      expect(() => instance.inc('nope')).to.throw(
+        errors.ContractError,
+        /number.*nope/
+      )
+      expect(() => instance.pair(20)).to.throw(
+        errors.ContractError,
+        /Wrong number of arg/
+      )
     })
     it('methods up the chain omitted from the contract can be used normally', function() {
       const instance = new SubExample(10)
@@ -800,22 +716,23 @@ describe('constructs', function() {
     it('check `isA` for the `this` argument', function() {
       const instance = new SubExample(10)
       const incFn = instance.inc
-      ;(function() {
-        incFn(20)
-      }.should.throwContract(/isA\(ExampleImpl\)[\s\S]+the `this` argument/))
-      ;(function() {
-        incFn.call(new SubExample(5), 2, 4)
-      }.should.ok)
-      ;(function() {
-        incFn.call({}, 2)
-      }.should.throwContract(/the `this` argument/))
+      expect(() => incFn(20)).to.throw(
+        errors.ContractError,
+        /isA\(ExampleImpl\)[\s\S]+the `this` argument/
+      )
+      expect(() => incFn.call(new SubExample(5), 2, 4)).to.be.ok
+      expect(() => incFn.call({}, 2)).to.throw(
+        errors.ContractError,
+        /the `this` argument/
+      )
     })
     it('`isA` checks on subclass refuses superclass', function() {
       const instance = new SubExample(10)
       const pairFn = instance.pair
-      ;(function() {
-        pairFn.call(new Example(5))
-      }.should.throwContract(/isA\(SubExampleImpl\)[\s\S]+`this`/))
+      expect(() => pairFn.call(new Example(5))).to.throw(
+        errors.ContractError,
+        /isA\(SubExampleImpl\)[\s\S]+`this`/
+      )
     })
   })
 
@@ -853,34 +770,32 @@ describe('constructs', function() {
     })
 
     it('detects misuses', function() {
-      ;(function() {
-        wrapped(theObject, 'ten')
-      }.should.throwContract(/inc[\s\S]+return value of the call/))
+      expect(() => wrapped(theObject, 'ten')).to.throw(
+        errors.ContractError,
+        /inc[\s\S]+return value of the call/
+      )
     })
 
     it('produces a short stack context on prototype function calls', function() {
       try {
         wrapped(theObject, 'ten')
       } catch (e) {
-        e.message.should.not.match(/at position/)
+        expect(e.message).not.to.include('at position')
       }
     })
     it('the truncated context retains the original wrap location', function() {
-      const index = __.findIndex(
-        fs
-          .readFileSync('./src/contract.spec.js')
-          .toString()
-          .split('\n'),
-        function(line) {
-          return line.match(/theContract.wrap\(theFunction\)/)
-        }
-      )
+      const index = fs
+        .readFileSync('./src/contract.spec.js')
+        .toString()
+        .split('\n')
+        .findIndex(line => line.match(/theContract.wrap\(theFunction\)/))
       const expected = new RegExp(
         `contract was wrapped at: .*/contract.spec.js:${index + 1}`
       )
-      ;(function() {
-        wrapped(theObject, 'ten')
-      }.should.throwContract(expected))
+      expect(() => wrapped(theObject, 'ten')).to.throw(
+        errors.ContractError,
+        expected
+      )
     })
   })
 })
@@ -933,39 +848,30 @@ describe('fn', function() {
   })
 
   it('fails on non-function', function() {
-    ;(function() {
-      idC.wrap(5)
-    }.should.throwContract())
+    expect(() => idC.wrap(5)).to.throw(errors.ContractError)
   })
   it('fails on wrong number of args', function() {
-    ;(function() {
-      idC.wrap(id)(5, 6)
-    }.should.throwContract())
+    expect(() => idC.wrap(id)(5, 6)).to.throw(errors.ContractError)
   })
   it('fails on input', function() {
-    ;(function() {
-      idC.wrap(id)('boo')
-    }.should.throwContract())
+    expect(() => idC.wrap(id)('boo')).to.throw(errors.ContractError)
   })
   it('fails on 2nd input', function() {
-    ;(function() {
-      twoIdC.wrap(twoId)(5, 10)
-    }.should.throwContract())
+    expect(() => twoIdC.wrap(twoId)(5, 10)).to.throw(errors.ContractError)
   })
   it('fails on output', function() {
-    ;(function() {
-      strIdC.wrap(id)(10)
-    }.should.throwContract())
+    expect(() => strIdC.wrap(id)(10)).to.throw(errors.ContractError)
   })
   it('fails on extra input', function() {
-    ;(function() {
-      manyIdC.wrap(manyId)(5, 6, 'boo', 7)
-    }.should.throwContract())
+    expect(() => manyIdC.wrap(manyId)(5, 6, 'boo', 7)).to.throw(
+      errors.ContractError
+    )
   })
   it('fails on return when extra arguments', function() {
-    ;(function() {
-      manyIdC.wrap(strId)(5, 6, 7)
-    }.should.throwContract(/for the return/))
+    expect(() => manyIdC.wrap(strId)(5, 6, 7)).to.throw(
+      errors.ContractError,
+      /for the return/
+    )
   })
 
   it('success on this', function() {
@@ -973,10 +879,8 @@ describe('fn', function() {
     expect(v.getX(4)).to.equal('w')
   })
   it('fails on this', function() {
-    ;(function() {
-      const v = { x: 50, getX: thisC.wrap(thisId) }
-      v.getX(4)
-    }.should.throwContract(/this/))
+    const v = { x: 50, getX: thisC.wrap(thisId) }
+    expect(() => v.getX(4)).to.throw(errors.ContractError, /this/)
   })
 
   it('passes w missing opt', function() {
@@ -992,14 +896,13 @@ describe('fn', function() {
     ])
   })
   it('fails too few', function() {
-    ;(function() {
-      oneOptC.wrap(twoId)()
-    }.should.throwContract(/few/))
+    expect(() => oneOptC.wrap(twoId)()).to.throw(errors.ContractError, /few/)
   })
   it('fails too many', function() {
-    ;(function() {
-      oneOptC.wrap(twoId)(10, 20, 30)
-    }.should.throwContract(/many/))
+    expect(() => oneOptC.wrap(twoId)(10, 20, 30)).to.throw(
+      errors.ContractError,
+      /many/
+    )
   })
 })
 
@@ -1051,39 +954,40 @@ describe('fun', function() {
   })
 
   it('fails on non-function', function() {
-    ;(function() {
-      idC.wrap(5)
-    }.should.throwContract(/fun/))
+    expect(() => idC.wrap(5)).to.throw(errors.ContractError, /fun/)
   })
   it('fails on wrong number of args', function() {
-    ;(function() {
-      idC.wrap(id)(5, 6)
-    }.should.throwContract(/Wrong number/))
+    expect(() => idC.wrap(id)(5, 6)).to.throw(
+      errors.ContractError,
+      /Wrong number/
+    )
   })
   it('fails on input', function() {
-    ;(function() {
-      idC.wrap(id)('boo')
-    }.should.throwContract(/the_arg/))
+    expect(() => idC.wrap(id)('boo')).to.throw(errors.ContractError, /the_arg/)
   })
   it('fails on 2nd input', function() {
-    ;(function() {
-      twoIdC.wrap(twoId)(5, 10)
-    }.should.throwContract(/sndArg/))
+    expect(() => twoIdC.wrap(twoId)(5, 10)).to.throw(
+      errors.ContractError,
+      /sndArg/
+    )
   })
   it('fails on output', function() {
-    ;(function() {
-      strIdC.wrap(id)(10)
-    }.should.throwContract(/for the return/))
+    expect(() => strIdC.wrap(id)(10)).to.throw(
+      errors.ContractError,
+      /for the return/
+    )
   })
   it('fails on extra input', function() {
-    ;(function() {
-      manyIdC.wrap(manyId)(5, 6, 'boo', 7)
-    }.should.throwContract(/3rd extra argument/))
+    expect(() => manyIdC.wrap(manyId)(5, 6, 'boo', 7)).to.throw(
+      errors.ContractError,
+      /3rd extra argument/
+    )
   })
   it('fails on return when extra arguments', function() {
-    ;(function() {
-      manyIdC.wrap(strId)(5, 6, 7)
-    }.should.throwContract(/for the return/))
+    expect(() => manyIdC.wrap(strId)(5, 6, 7)).to.throw(
+      errors.ContractError,
+      /for the return/
+    )
   })
 
   it('success on this', function() {
@@ -1091,9 +995,7 @@ describe('fun', function() {
     expect(v.getX(4)).to.equal('w')
   })
   it('fails on this', function() {
-    ;(function() {
-      const v = { x: 50, getX: thisC.wrap(thisId) }
-      v.getX(5)
-    }.should.throwContract(/this/))
+    const v = { x: 50, getX: thisC.wrap(thisId) }
+    expect(() => v.getX(5)).to.throw(errors.ContractError, /this/)
   })
 })

@@ -4,9 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const { expect } = require('chai')
 const c = require('./contract')
-
-require('should')
 
 describe('c.constructs', function() {
   describe('with a class', function() {
@@ -28,20 +27,19 @@ describe('c.constructs', function() {
 
     it('can construct', function() {
       const instance = new Example(10)
-
-      instance.value.should.be.eql(10)
+      expect(instance).to.include({ value: 10 })
     })
 
     it('allows `instanceof` and `isA` checks on the wrapped constructor', function() {
       const instance = new Example(5)
-      instance.should.be['instanceof'](Example)
-      c.isA(Example).check(instance).should.be.ok
+      expect(instance).to.be.an.instanceof(Example)
+      expect(c.isA(Example)).to.passValue(instance)
     })
 
     it('allows `instanceof` and `isA` checks on the implementation', function() {
       const instance = new Example(5)
-      instance.should.be['instanceof'](ExampleImpl)
-      c.isA(ExampleImpl).check(instance).should.be.ok
+      expect(instance).to.be.an.instanceof(ExampleImpl)
+      expect(c.isA(ExampleImpl)).to.passValue(instance)
     })
   })
 })
