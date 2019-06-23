@@ -475,7 +475,7 @@ function or(/* ... */) {
     const c = self.nestedChecker(data, function() {}, context) // this is a bit of a hack.
     return next(c, data, errors.stackContextItems.or)
   }
-  self.needsWrappingIfAny(allContracts)
+  self.needsWrappingIfAny(_.union(self.contracts, self.wrappingContracts))
   return self
 }
 exports.or = or
