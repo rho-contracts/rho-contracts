@@ -28,6 +28,11 @@
   "engines": {
     "node": ">= 8"
   },
+  "files": [
+    "src",
+    "!*.spec.js",
+    "!src/generateHTML.js"
+  ],
   "repository": "rho-contracts/rho-contracts",
   "readmeFilename": "README.md",
   "bugs": {
