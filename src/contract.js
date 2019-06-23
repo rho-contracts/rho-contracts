@@ -4,11 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const _ = require('underscore')
 const c = require('./contract.impl')
 const errors = require('./contract-errors')
 
-_.extend(c, require('./function-contracts.js'))
+Object.assign(c, require('./function-contracts.js'))
 
 const thisModuleName = 'Contracts'
 
@@ -588,9 +587,8 @@ const contracts = {
   privates: c.any, // private variables, to grant access to the test module
 }
 
-module.exports = c.publish(thisModuleName, c, contracts)
-
-_.extend(module.exports, {
+module.exports = {
+  ...c.publish(thisModuleName, c, contracts),
   functionContract,
   contractObject,
   strictExtension,
@@ -598,4 +596,4 @@ _.extend(module.exports, {
   objectContractObject,
   Contract: c.Contract,
   ContractError: errors.ContractError,
-})
+}
