@@ -1,6 +1,6 @@
 {
-  "name": "rho-contracts-fork",
-  "version": "1.3.0",
+  "name": "@rho-contracts/rho-contracts",
+  "version": "2.0.0",
   "description": "Racket-style Higher Order Contracts in Plain Javascript",
   "main": "index.js",
   "keywords": [
@@ -40,5 +40,5 @@
     "prettier:check": "prettier --check \"**/*.@(js|md|json|yml)\""
   },
   "author": "Guillaume Marceau <guillaume.marceau@bodylabs.com> (http://bodylabs.com/)",
-  "license": "Mozilla Public License Version 2.0"
+  "license": "MPL-2.0"
 }

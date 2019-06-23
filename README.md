@@ -2,48 +2,41 @@
     - License, v. 2.0. If a copy of the MPL was not distributed with this
     - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-# rho-contracts-fork
+# rho-contracts
 
-Racket-style Higher-Order Contracts in Plain JavaScript
+Higher-order contracts and runtime schema checking for JavaScript
 
-This is a fork of [sefaira/rho-contracts.js][] which is maintained by the
-original author and the team at Body Labs. The maintainers under the
-`sefaira/` account are on hiatus, so this fork will continue
-rho-contracts' maintenance and development, notably
-
-- Implemented support for ES6 classes
-- Improved stack trace support across more browsers
-
-[sefaira/rho-contracts.js]: https://github.com/sefaira/rho-contracts.js
+These can provide Racket-style contracts which wrap JavaScript function calls,
+enforcing and documenting the pre- and postconditions.
 
 ## Table of Content
 
-[Installation](#installation)  
-[Introduction](#introduction)  
-[Run-time vs Compile-time](#runtime)  
-[Higher-order contracts](#higher-order)  
-[Blame, Blame-correctness, and Blame Tracking](#blame)  
-[Contracts on Functions-as-Values](#functions-as-values)  
-[Tutorial](#tutorial)  
-[Additional Documentation](#tutorial)\_\_
-[Basic Value Contracts](#basic-value)  
-[Storing Custom Contracts](#storing)  
-[Data Structure Contracts](#data-structure)  
-[Contracts on Functions](#functions)  
-[Contracts for Optional Arguments](#optargs)  
-[Wrapping vs Checking](#wrap-vs-check)  
-[Object Contracts](#objects)  
-[A Lightweight Notation](#lightweight)  
-[Contracts on Prototypes and Constructors](#constructors)  
-[Undocumented Functionality](#undocumented)  
-[Related Work](#related)  
+[Installation](#installation)
+[Introduction](#introduction)
+[Run-time vs Compile-time](#runtime)
+[Higher-order contracts](#higher-order)
+[Blame, Blame-correctness, and Blame Tracking](#blame)
+[Contracts on Functions-as-Values](#functions-as-values)
+[Tutorial](#tutorial)
+[Additional Documentation](#tutorial)
+[Basic Value Contracts](#basic-value)
+[Storing Custom Contracts](#storing)
+[Data Structure Contracts](#data-structure)
+[Contracts on Functions](#functions)
+[Contracts for Optional Arguments](#optargs)
+[Wrapping vs Checking](#wrap-vs-check)
+[Object Contracts](#objects)
+[A Lightweight Notation](#lightweight)
+[Contracts on Prototypes and Constructors](#constructors)
+[Undocumented Functionality](#undocumented)
+[Related Work](#related)
 [License](#license)
 
 <a name="installation"/>
 
 ## Installation
 
-`npm install rho-contracts-fork`
+`npm install @rho-contracts/rho-contracts`
 
 <a name="introduction"/>
 
@@ -97,7 +90,7 @@ possible to place the specification next to the definition of `derive`, where it
 belongs, like this:
 
 ```javascript
-var c = require('rho-contracts-fork')
+var c = require('@rho-contracts/rho-contracts')
 
 // derive: returns a function that is the numerically-computed derivative
 //         of the given function.
@@ -267,7 +260,7 @@ and methods by reading [`contract.js`](https://github.com/sefaira/rho-contracts.
 The contract library is typically `require`'d and bound to a variable called `c`:
 
 ```javascript
-c = require('rho-contracts-fork')
+c = require('@rho-contracts/rho-contracts')
 ```
 
 <a name="basic-value"/>
@@ -374,7 +367,7 @@ your node module and keep the contracts created and used in that module in the c
 
 ```javascript
 > var _ = require('underscore')
-> var c = _.clone(require('rho-contracts-fork'));
+> var c = _.clone(require('@rho-contracts/rho-contracts'));
 > c.numberAsString = c.matches(/^[0-9]+(\.[0-9]+)?$/)
 > c.or(c.falsy, c.numberAsString).check(null)     // ok, null is falsy
 null
@@ -579,7 +572,7 @@ argument, a contract that has been marked optional makes that argument optional
 argument must be optional as well.
 
 ```javascript
-> var c = require('rho-contracts-fork')
+> var c = require('@rho-contracts/rho-contracts')
 > var util = require('util')
 
 > var x = 0
@@ -1010,6 +1003,14 @@ And also
   roots, they require lots of code for little benefit, in particular, they cannot
   check higher-order functions, cannot separate specification from
   implementation. See Findler and Felleisen for a more thorough comparison.
+
+## Provenance
+
+This project was originally developed at Sefaira, and from 2016–2017 was
+[forked][fork] and maintained by the original author and other members of the
+team at Body Labs. Maintenance continues in this independent organization.
+
+[fork]: https://www.npmjs.com/package/rho-contracts-fork
 
 <a name="license"/>
 
