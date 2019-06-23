@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const fs = require('fs')
-const { expect, Assertion } = require('chai')
+const { expect } = require('chai')
 const c = require('./contract')
 const errors = require('./contract-errors')
 
