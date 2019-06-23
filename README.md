@@ -9,28 +9,28 @@ Higher-order contracts and runtime schema checking for JavaScript
 These can provide Racket-style contracts which wrap JavaScript function calls,
 enforcing and documenting the pre- and postconditions.
 
-## Table of Content
+## Table of Contents
 
-[Installation](#installation)
-[Introduction](#introduction)
-[Run-time vs Compile-time](#runtime)
-[Higher-order contracts](#higher-order)
-[Blame, Blame-correctness, and Blame Tracking](#blame)
-[Contracts on Functions-as-Values](#functions-as-values)
-[Tutorial](#tutorial)
-[Additional Documentation](#tutorial)
-[Basic Value Contracts](#basic-value)
-[Storing Custom Contracts](#storing)
-[Data Structure Contracts](#data-structure)
-[Contracts on Functions](#functions)
-[Contracts for Optional Arguments](#optargs)
-[Wrapping vs Checking](#wrap-vs-check)
-[Object Contracts](#objects)
-[A Lightweight Notation](#lightweight)
-[Contracts on Prototypes and Constructors](#constructors)
-[Undocumented Functionality](#undocumented)
-[Related Work](#related)
-[License](#license)
+- [Installation](#installation)
+- [Introduction](#introduction)
+- [Run-time vs Compile-time](#runtime)
+- [Higher-order contracts](#higher-order)
+- [Blame, Blame-correctness, and Blame Tracking](#blame)
+- [Contracts on Functions-as-Values](#functions-as-values)
+- [Tutorial](#tutorial)
+- [Additional Documentation](#tutorial)
+- [Basic Value Contracts](#basic-value)
+- [Storing Custom Contracts](#storing)
+- [Data Structure Contracts](#data-structure)
+- [Contracts on Functions](#functions)
+- [Contracts for Optional Arguments](#optargs)
+- [Wrapping vs Checking](#wrap-vs-check)
+- [Object Contracts](#objects)
+- [A Lightweight Notation](#lightweight)
+- [Contracts on Prototypes and Constructors](#constructors)
+- [Undocumented Functionality](#undocumented)
+- [Related Work](#related)
+- [License](#license)
 
 <a name="installation"/>
 
