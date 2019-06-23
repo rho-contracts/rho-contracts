@@ -78,19 +78,15 @@ function cleanStack(stack) {
     /\/contract.impl.js$/,
     /\/function-contracts.js$/,
     /\/contract-errors.js$/,
-    /rho-contracts.js\/index.js$/,
+    /rho-contracts\/index.js$/,
     /\/underscore.js$/,
     /^native array.js$/,
     /^module.js$/,
     /^native messages.js$/,
     /^undefined$/,
   ]
-  while (!_.isEmpty(stack)) {
-    if (
-      _.any(irrelevantFileNames, function(r) {
-        return r.test(stack[0].getFileName())
-      })
-    ) {
+  while (stack.length > 0) {
+    if (irrelevantFileNames.some(r => r.test(stack[0].getFileName()))) {
       stack.shift()
     } else {
       break
@@ -117,9 +113,12 @@ function captureCleanStack() {
 exports.captureCleanStack = captureCleanStack
 
 function prettyPrintStack(stack) {
-  return _.map(stack, function(callsite) {
-    return `  at ${callsite.getFunctionName()} (${callsite.getFileName()}:${callsite.getLineNumber()}:${callsite.getColumnNumber()})`
-  }).join('\n')
+  return stack
+    .map(
+      callsite =>
+        `  at ${callsite.getFunctionName()} (${callsite.getFileName()}:${callsite.getLineNumber()}:${callsite.getColumnNumber()})`
+    )
+    .join('\n')
 }
 
 function ContractError(/* opt */ context, /* opt */ msg) {
@@ -141,7 +140,7 @@ function ContractError(/* opt */ context, /* opt */ msg) {
   }
 }
 
-ContractError.prototype = _.extend(Object.create(Error.prototype), {
+ContractError.prototype = Object.assign(Object.create(Error.prototype), {
   captureCleanStack: function() {
     const self = this
     self.renderedStack = prettyPrintStack(captureCleanStack())
@@ -187,7 +186,7 @@ ContractError.prototype = _.extend(Object.create(Error.prototype), {
     if (!_.isFunction(self.context.data))
       if (
         !self.expected || // if expected() has not already printed the value
-        !_.isEmpty(self.context.stack)
+        self.context.stack.length > 0
       )
         // Don't bother printing functions,
         // or there is a stack, so expected() has printed only
@@ -203,9 +202,9 @@ ContractError.prototype = _.extend(Object.create(Error.prototype), {
 
     self.context = context || self.context
 
-    if (!_.isEmpty(self.context.stack)) {
+    if (self.context.stack.length > 0) {
       let stack = self.context.stack
-      const immediateContext = _.last(stack)
+      const [immediateContext] = stack.slice(-1)
 
       if (stack[stack.length - 2] === stackContextItems.extraArguments) {
         // Special case for error messages of extra arguments
@@ -221,10 +220,8 @@ ContractError.prototype = _.extend(Object.create(Error.prototype), {
         stack = stack.slice(0, -1)
       }
 
-      if (!_.isEmpty(stack)) {
-        const stackStrings = _.map(stack, function(i) {
-          return i['short'] ? i['short'] : i
-        })
+      if (stack.length > 0) {
+        const stackStrings = stack.map(i => (i['short'] ? i['short'] : i))
         self.message +=
           `at position ${stackStrings.join('')}\n` +
           `in contract:\n${self.context.contract.toString()}\n`

@@ -377,8 +377,7 @@ Another option is to make a clone of the contract library at the top of
 your node module and keep the contracts created and used in that module in the clone:
 
 ```javascript
-> var _ = require('underscore')
-> var c = _.clone(require('@rho-contracts/rho-contracts'));
+> const c = { ...require('@rho-contracts/rho-contracts') }
 > c.numberAsString = c.matches(/^[0-9]+(\.[0-9]+)?$/)
 > c.or(c.falsy, c.numberAsString).check(null)     // ok, null is falsy
 null

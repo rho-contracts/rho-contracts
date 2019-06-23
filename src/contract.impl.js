@@ -120,7 +120,7 @@ function newContext(thingName, data, contract, wrapping) {
 //
 
 // State for the documentation mechanisms:
-const builtInContractNames = []
+const builtInContractNames = new Set()
 let collectingBuiltInContractNames = true
 let currentCategory = false
 
@@ -129,9 +129,10 @@ function Contract(
   spec
 ) {
   this.contractName = name
-  if (collectingBuiltInContractNames && !_.contains(builtInContractNames, name))
-    builtInContractNames.push(name)
-  _.extend(this, spec || {})
+  if (collectingBuiltInContractNames) {
+    builtInContractNames.add(name)
+  }
+  Object.assign(this, spec)
 }
 exports.privates.Contract = Contract
 
@@ -147,12 +148,9 @@ Contract.prototype = {
 
   needsWrappingIfAny: function(contracts) {
     const self = this
-    if (
-      _.any(_.map(contracts, _autoToContract), function(c) {
-        return c.needsWrapping
-      })
-    )
+    if (contracts.map(_autoToContract).some(c => c.needsWrapping)) {
       self.needsWrapping = true
+    }
   },
 
   firstChecker: function(data) {
@@ -188,11 +186,9 @@ Contract.prototype = {
     return []
   },
   rename: function(name) {
-    if (
-      collectingBuiltInContractNames &&
-      !_.contains(builtInContractNames, name)
-    )
-      builtInContractNames.push(name)
+    if (collectingBuiltInContractNames) {
+      builtInContractNames.add(name)
+    }
     return u.gentleUpdate(this, {
       contractName: name,
       toString: function() {
@@ -215,7 +211,7 @@ Contract.prototype = {
 
   doc: function(/* ... */) {
     return u.gentleUpdate(this, {
-      theDoc: _.toArray(arguments),
+      theDoc: Array.from(arguments),
       category: currentCategory,
     })
   },
@@ -238,7 +234,7 @@ function _toContract(v, upgradeObjects) {
         false,
         `the example element of the array is missing. ${v}`
       )
-    if (_.size(v) > 1)
+    if (v.length > 1)
       throw new errors.ContractLibraryError(
         'toContract',
         false,
@@ -310,12 +306,12 @@ const truthy = pred(function(data) {
 exports.truthy = truthy
 
 function oneOf(/* ... */) {
-  return new Contract(`oneOf(${_.toArray(arguments).join(', ')})`, {
+  return new Contract(`oneOf(${Array.from(arguments).join(', ')})`, {
     firstChecker: function(vv) {
       const self = this
       return _.contains(self.values, vv)
     },
-    values: _.toArray(arguments),
+    values: Array.from(arguments),
     toString: function() {
       const self = this
       return `c.${self.contractName}`
@@ -388,7 +384,7 @@ function checkMany(silent, contracts, data, next) {
 function makeAnd(silent) {
   return function(/* ... */) {
     const self = new Contract('and')
-    self.contracts = _.toArray(arguments)
+    self.contracts = Array.from(arguments)
     self.nestedChecker = function(data, next) {
       const self = this
       checkMany(silent, self.contracts, data, next)
@@ -423,12 +419,12 @@ exports.matches = matches
 
 function or(/* ... */) {
   const self = new Contract('or')
-  self.contracts = _.filter(arguments, function(c) {
-    return !c.needsWrapping
-  })
-  self.wrappingContracts = _.difference(arguments, self.contracts)
 
-  if (_.size(self.wrappingContracts) > 1)
+  const allContracts = Array.from(arguments)
+  self.contracts = allContracts.filter(c => !c.needsWrapping)
+  self.wrappingContracts = allContracts.filter(c => c.needsWrapping)
+
+  if (self.wrappingContracts.length > 1)
     throw new errors.ContractLibraryError(
       'or',
       false,
@@ -437,7 +433,6 @@ function or(/* ... */) {
 
   self.nestedChecker = function(data, next, context) {
     const self = this
-    const allContracts = _.union(self.contracts, self.wrappingContracts)
     const exceptions = []
 
     const oldFail = context.fail
@@ -479,7 +474,7 @@ function or(/* ... */) {
     const c = self.nestedChecker(data, function() {}, context) // this is a bit of a hack.
     return next(c, data, errors.stackContextItems.or)
   }
-  self.needsWrappingIfAny(_.union(self.contracts, self.wrappingContracts))
+  self.needsWrappingIfAny(allContracts)
   return self
 }
 exports.or = or
@@ -524,19 +519,15 @@ function array(itemContract) {
   self.firstChecker = _.isArray
   self.nestedChecker = function(data, next) {
     const self = this
-    _.each(data, function(item, i) {
+    data.forEach((item, i) => {
       next(self.itemContract, item, errors.stackContextItems.arrayItem(i))
     })
   }
   self.wrapper = function(data, next) {
     const self = this
-    const result = _.map(data, function(item, i) {
-      return next(
-        self.itemContract,
-        item,
-        errors.stackContextItems.arrayItem(i)
-      )
-    })
+    const result = data.map((item, i) =>
+      next(self.itemContract, item, errors.stackContextItems.arrayItem(i))
+    )
     return result
   }
   self.needsWrappingIfAny([itemContract])
@@ -550,20 +541,20 @@ exports.array = array
 
 function tuple(/* ... */) {
   const self = new Contract('tuple')
-  self.contracts = _.toArray(arguments)
+  self.contracts = Array.from(arguments)
   self.firstChecker = _.isArray
   self.nestedChecker = function(data, next, context) {
     const self = this
-    if (_.size(data) < _.size(self.contracts)) {
+    if (data.length < self.contracts.length) {
       context.fail(
         new errors.ContractError(context).expected(
-          `tuple of size ${_.size(self.contracts)}`,
+          `tuple of size ${self.contracts.length}`,
           data
         )
       )
     }
 
-    _.zip(self.contracts, data.slice(0, _.size(self.contracts))).forEach(
+    _.zip(self.contracts, data.slice(0, self.contracts.length)).forEach(
       function(pair, i) {
         next(pair[0], pair[1], errors.stackContextItems.tupleItem(i))
       }
@@ -571,11 +562,8 @@ function tuple(/* ... */) {
   }
   self.wrapper = function(data, next) {
     const self = this
-    return _.map(
-      _.zip(self.contracts, data.slice(0, _.size(self.contracts))),
-      function(pair, i) {
-        return next(pair[0], pair[1], errors.stackContextItems.tupleItem(i))
-      }
+    return _.zip(self.contracts, data.slice(0, self.contracts.length)).map(
+      (pair, i) => next(pair[0], pair[1], errors.stackContextItems.tupleItem(i))
     )
   }
 
@@ -585,7 +573,7 @@ function tuple(/* ... */) {
     const result = u.gentleUpdate(self, {
       nestedChecker: function(data, next, context) {
         const self = this
-        if (_.size(data) !== _.size(self.contracts)) {
+        if (data.length !== self.contracts.length) {
           context.fail(
             new errors.ContractError(context)
               .expected(`tuple of exactly size ${_.size(self.contracts)}`, data)
@@ -702,10 +690,8 @@ function object(/* opt */ fieldContracts) {
       nestedChecker: function(data, next, context) {
         const self = this
         const extra = _.difference(_.keys(data), _.keys(self.fieldContracts))
-        if (!_.isEmpty(extra)) {
-          const extraStr = _.map(extra, function(k) {
-            return `\`${k}\``
-          }).join(', ')
+        if (extra.length > 0) {
+          const extraStr = extra.map(k => `\`${k}\``).join(', ')
 
           context.fail(
             new errors.ContractError(
@@ -799,7 +785,7 @@ function documentModule(moduleName /* ... */) {
 
   documentationTable[moduleName].doc = documentationTable[
     moduleName
-  ].doc.concat(_.toArray(arguments).slice(1))
+  ].doc.concat(Array.from(arguments).slice(1))
 }
 exports.documentModule = documentModule
 
@@ -809,13 +795,13 @@ function documentCategory(moduleName, category /* ... */) {
   currentCategory = category
   documentationTable[moduleName].categories.push = {
     name: category,
-    doc: _.toArray(arguments).slice(2),
+    doc: Array.from(arguments).slice(2),
   }
 }
 exports.documentCategory = documentCategory
 
 function documentType(moduleName, contract) {
-  if (_.contains(builtInContractNames, contract.contractName))
+  if (builtInContractNames.has(contract.contractName))
     throw new errors.ContractLibraryError(
       '`documentType` called on a contract that still has its built-in name.'
     )
