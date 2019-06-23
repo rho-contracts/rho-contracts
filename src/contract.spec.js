@@ -4,11 +4,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const { expect, Assertion } = require('chai')
 const should = require('should')
 const __ = require('underscore')
 const c = require('./contract')
 const fs = require('fs')
 const errors = require('./contract-errors')
+
+Assertion.addMethod('passValue', function(goodValue) {
+  const obj = this._obj
+
+  // first, our instanceof check, shortcut
+  new Assertion(this._obj).to.be.instanceof(c.Contract)
+
+  new Assertion(this._obj.check(goodValue)).to.equal(goodValue)
+})
 
 // eslint-disable-next-line no-extend-native
 Array.prototype.toString = function() {
@@ -88,10 +98,10 @@ should.Assertion.prototype.throwType = function(type, message) {
 
 describe('toContract', function() {
   it('passes contracts', function() {
-    c.toContract(c.any).contractName.should.eql(c.any.contractName)
+    expect(c.toContract(c.any).contractName).to.equal(c.any.contractName)
   })
   it('wrap objects', function() {
-    c.toContract({}).should.be.an['instanceof'](c.Contract)
+    expect(c.toContract({})).to.be.an.instanceof(c.Contract)
   })
   it('wrap objects recursively', function() {
     const kidPark = c.toContract({
@@ -127,23 +137,23 @@ describe('toContract', function() {
         ],
       },
     }
-    kidPark.check(example).should.be.eql(example)
+    expect(kidPark.check(example)).to.deep.equal(example)
     example.playunit.ladders[1].size = 0
     ;(function() {
       kidPark.check(example)
     }.should.throwContract(/Expected string/))
   })
   it('wraps arrays', function() {
-    c.toContract([c.any]).should.be.an['instanceof'](c.Contract)
+    expect(c.toContract([c.any])).to.be.an.instanceof(c.Contract)
   })
   it('wraps values', function() {
-    c.toContract(5).contractName.should.be.eql(c.value(5).contractName)
+    expect(c.toContract(5).contractName).to.equal(c.value(5).contractName)
   })
 })
 
 describe('any', function() {
   it('pass 5', function() {
-    c.any.check(5).should.eql(5)
+    expect(c.any.check(5)).to.equal(5)
   })
 })
 
@@ -162,9 +172,7 @@ describe('nothing', function() {
 
 describe('value', function() {
   it('pass same', function() {
-    c.value(5)
-      .check(5)
-      .should.eql(5)
+    expect(c.value(5)).to.passValue(5)
   })
   it('reject different', function() {
     ;(function() {
@@ -175,7 +183,7 @@ describe('value', function() {
 
 describe('string', function() {
   it('pass string', function() {
-    c.string.check('asd').should.eql('asd')
+    expect(c.string).to.passValue('asd')
   })
   it('reject different', function() {
     ;(function() {
@@ -186,7 +194,7 @@ describe('string', function() {
 
 describe('Date', function() {
   it('pass Date', function() {
-    c.date.check(new Date()).should.ok
+    expect(c.date).to.passValue(new Date())
   })
   it('reject different', function() {
     ;(function() {
@@ -198,7 +206,7 @@ describe('Date', function() {
 describe('isA', function() {
   function ExampleImpl() {}
   it('detects a newly constructed object', function() {
-    c.isA(ExampleImpl).check(new ExampleImpl()).should.be.ok
+    expect(c.isA(ExampleImpl)).to.passValue(new ExampleImpl())
   })
 
   it('rejects different', function() {
@@ -210,17 +218,13 @@ describe('isA', function() {
 
 describe('pred', function() {
   it('returns a contract', function() {
-    c.pred(function(v) {
-      return false
-    }).should.be['instanceof'](c.Contract)
+    expect(c.pred(() => false)).to.be.an.instanceof(c.Contract)
   })
 })
 
 describe('and', function() {
   it('passes two', function() {
-    c.and(c.string, c.value('asd'))
-      .check('asd')
-      .should.eql('asd')
+    expect(c.and(c.string, c.value('asd'))).to.passValue('asd')
   })
   it('fails first', function() {
     ;(function() {
@@ -236,14 +240,10 @@ describe('and', function() {
 
 describe('or', function() {
   it('passes first', function() {
-    c.or(c.string, c.value(6))
-      .check('asd')
-      .should.eql('asd')
+    expect(c.or(c.string, c.value(6)).check('asd')).to.equal('asd')
   })
   it('passes second', function() {
-    c.or(c.string, c.value(6))
-      .check(6)
-      .should.eql(6)
+    expect(c.or(c.string, c.value(6))).to.passValue(6)
   })
   it('fails', function() {
     ;(function() {
@@ -259,7 +259,7 @@ describe('or', function() {
 
 describe('matches', function() {
   it('passes', function() {
-    c.matches(/x+/).check('---xxxxx  ').should.ok
+    expect(c.matches(/x+/)).to.passValue('---xxxxx  ')
   })
   it('fail', function() {
     ;(function() {
@@ -280,14 +280,10 @@ describe('array', function() {
     }.should.throwContract())
   })
   it('passes empty', function() {
-    c.array(c.any)
-      .check([])
-      .should.eql([])
+    expect(c.array(c.any)).to.passValue([])
   })
   it('passes simple', function() {
-    c.array(c.value(5))
-      .check([5, 5])
-      .should.eql([5, 5])
+    expect(c.array(c.value(5))).to.passValue([5, 5])
   })
   it('fails first', function() {
     ;(function() {
@@ -300,7 +296,7 @@ describe('array', function() {
     }.should.throwContract())
   })
   it('passes nested', function() {
-    c.array(c.array(c.value(5))).check([[5], [5, 5]]).should.ok
+    expect(c.array(c.array(c.value(5)))).to.passValue([[5], [5, 5]])
   })
   it('fails nested', function() {
     ;(function() {
@@ -321,14 +317,10 @@ describe('tuple', function() {
     }.should.throwContract())
   })
   it('passes simple', function() {
-    c.tuple(c.value(5), c.value(10))
-      .check([5, 10])
-      .should.eql([5, 10])
+    expect(c.tuple(c.value(5), c.value(10))).to.passValue([5, 10])
   })
   it('passes longer', function() {
-    c.tuple(c.value(5), c.value(10))
-      .check([5, 10, 'x'])
-      .should.eql([5, 10, 'x'])
+    expect(c.tuple(c.value(5), c.value(10))).to.passValue([5, 10, 'x'])
   })
   it('fails first', function() {
     ;(function() {
@@ -341,9 +333,9 @@ describe('tuple', function() {
     }.should.throwContract())
   })
   it('passes nested', function() {
-    c
-      .tuple(c.string, c.tuple(c.value(5), c.string), c.number)
-      .check(['a', [5, 'b'], 5]).should.ok
+    expect(
+      c.tuple(c.string, c.tuple(c.value(5), c.string), c.number)
+    ).to.passValue(['a', [5, 'b'], 5])
   })
   it('fails nested', function() {
     ;(function() {
@@ -358,9 +350,7 @@ describe('tuple', function() {
 
 describe('hash', function() {
   it('passes', function() {
-    c.hash(c.string)
-      .check({ x: 'aaa', y: 'bbb' })
-      .should.eql({ x: 'aaa', y: 'bbb' })
+    expect(c.hash(c.string)).to.passValue({ x: 'aaa', y: 'bbb' })
   })
   it('fails', function() {
     ;(function() {
@@ -379,9 +369,11 @@ describe('hash', function() {
 
 describe('object regression', function() {
   it('one wrapping field and one non-wrapping field', function() {
-    c.object({ x: c.string, fn: c.fn() })
-      .wrap({ x: 'foo', fn: function() {} })
-      .x.should.eql('foo')
+    expect(
+      c
+        .object({ x: c.string, fn: c.fn() })
+        .wrap({ x: 'foo', fn: function() {} })
+    ).to.include({ x: 'foo' })
   })
 })
 
@@ -392,14 +384,12 @@ describe('object', function() {
     }.should.throwContract())
   })
   it('passes empty', function() {
-    c.object()
-      .check({})
-      .should.eql({})
+    const value = {}
+    expect(c.object().check(value)).to.equal(value)
   })
   it('passes simple', function() {
-    c.object({ x: c.value(5) })
-      .check({ x: 5 })
-      .should.eql({ x: 5 })
+    const value = { x: 5 }
+    expect(c.object({ x: c.value(5) }).check(value)).to.equal(value)
   })
   it('fails first', function() {
     ;(function() {
@@ -412,8 +402,10 @@ describe('object', function() {
     }.should.throwContract())
   })
   it('passes nested', function() {
-    c.object({ x: c.object({ y: c.value(5) }) }).check({ x: { y: 5 } }).should
-      .ok
+    const value = { x: { y: 5 } }
+    expect(c.object({ x: c.object({ y: c.value(5) }) }).check(value)).to.equal(
+      value
+    )
   })
   it('fails nested', function() {
     ;(function() {
@@ -433,23 +425,28 @@ describe('object', function() {
 
   describe('option field', function() {
     it('when missing', function() {
-      c.object({ x: c.value(5), y: c.optional(c.value(10)) }).check({ x: 5 })
-        .should.ok
+      const value = { x: 5 }
+      expect(
+        c.object({ x: c.value(5), y: c.optional(c.value(10)) }).check(value)
+      ).to.equal(value)
     })
     it('when null', function() {
-      c
-        .object({ x: c.value(5), y: c.optional(c.value(10)) })
-        .check({ x: 5, y: null }).should.ok
+      const value = { x: 5, y: null }
+      expect(
+        c.object({ x: c.value(5), y: c.optional(c.value(10)) }).check(value)
+      ).to.equal(value)
     })
     it('when undefined', function() {
-      c
-        .object({ x: c.value(5), y: c.optional(c.value(10)) })
-        .check({ x: 5, y: undefined }).should.ok
+      const value = { x: 5, y: undefined }
+      expect(
+        c.object({ x: c.value(5), y: c.optional(c.value(10)) }).check(value)
+      ).to.equal(value)
     })
     it('when present', function() {
-      c
-        .object({ x: c.value(5), y: c.optional(c.value(10)) })
-        .check({ x: 5, y: 10 }).should.ok
+      const value = { x: 5, y: 10 }
+      expect(
+        c.object({ x: c.value(5), y: c.optional(c.value(10)) }).check(value)
+      ).to.equal(value)
     })
     it('rejects when mismatched', function() {
       ;(function() {
@@ -486,14 +483,12 @@ describe('object', function() {
   })
 
   it('extra fields, passing', function() {
-    c.object({ x: c.value(5) })
-      .check({ x: 5, y: 10 })
-      .should.eql({ x: 5, y: 10 })
+    expect(c.object({ x: c.value(5) })).to.passValue({ x: 5, y: 10 })
   })
   it('extra fields, wrapping', function() {
-    c.object({ fn: c.fn() })
-      .wrap({ fn: function() {}, x: 5 })
-      .x.should.eql(5)
+    expect(
+      c.object({ fn: c.fn() }).wrap({ fn: function() {}, x: 5 })
+    ).to.include({ x: 5 })
   })
 
   it('wrap wraps fields and fails', function() {
@@ -506,18 +501,20 @@ describe('object', function() {
   })
 
   it('wrap maintains prototypes', function() {
-    const x = { thk: function() {} }
+    const x = { thk() {} }
     Object.getPrototypeOf(x).x = 5
-    Object.getPrototypeOf(c.object({ thk: c.fn() }).wrap(x)).should.eql({
-      x: 5,
-    })
+    expect(Object.getPrototypeOf(c.object({ thk: c.fn() }).wrap(x))).to.include(
+      {
+        x: 5,
+      }
+    )
   })
 
   it('extends passes', function() {
-    c.object({ x: c.number })
-      .extend({ y: c.string })
-      .check({ x: 5, y: 'asd' })
-      .should.eql({ x: 5, y: 'asd' })
+    expect(c.object({ x: c.number }).extend({ y: c.string })).to.passValue({
+      x: 5,
+      y: 'asd',
+    })
   })
   it('extends fails', function() {
     ;(function() {
@@ -530,30 +527,26 @@ describe('object', function() {
 
 describe('strict', function() {
   it('passes a good object', function() {
-    c
-      .object({ x: c.value(10) })
-      .strict()
-      .check({ x: 10 }).should.ok
+    expect(c.object({ x: c.value(10) }).strict()).to.passValue({ x: 10 })
   })
   it('passes a good tuple', function() {
-    c
-      .tuple(c.value(10))
-      .strict()
-      .check([10]).should.ok
+    expect(c.tuple(c.value(10)).strict()).to.passValue([10])
   })
   it('passes double strict on a good object', function() {
-    c
-      .object({ x: c.value(10) })
-      .strict()
-      .strict()
-      .check({ x: 10 }).should.ok
+    expect(
+      c
+        .object({ x: c.value(10) })
+        .strict()
+        .strict()
+    ).to.passValue({ x: 10 })
   })
   it('passes double strict on a good tuple', function() {
-    c
-      .tuple(c.value(10))
-      .strict()
-      .strict()
-      .check([10]).should.ok
+    expect(
+      c
+        .tuple(c.value(10))
+        .strict()
+        .strict()
+    ).to.passValue([10])
   })
   it('fails an object', function() {
     ;(function() {
@@ -663,10 +656,10 @@ describe('constructs', function() {
 
   it('creates a wrapped object', function() {
     const instance = new Example(5)
-    instance.x.should.eql(5)
+    expect(instance).to.include({ x: 5 })
     instance.inc(2)
-    instance.x.should.eql(7)
-    instance.constructor.should.eql(ExampleImpl)
+    expect(instance).to.include({ x: 7 })
+    expect(instance.constructor).to.equal(ExampleImpl)
   })
 
   it('refuses wrong constructor arguments', function() {
@@ -695,7 +688,7 @@ describe('constructs', function() {
   it('fields omitted from the contract can be used normally', function() {
     const w = new Example(4)
     w._dec('twenty')
-    isNaN(w.x).should.be.ok
+    expect(isNaN(w.x)).to.be.true
   })
 
   it('detects missing fields', function() {
@@ -715,25 +708,27 @@ describe('constructs', function() {
     }
     ChildExampleImpl.prototype = Object.create(ExampleImpl.prototype)
 
-    c
-      .fun({ x: c.number })
-      .constructs({
-        inc: c.fun({ i: c.number }),
-        _dec: c.fun({ i: c.number }),
-      })
-      .wrap(ChildExampleImpl).should.be.ok
+    expect(
+      c
+        .fun({ x: c.number })
+        .constructs({
+          inc: c.fun({ i: c.number }),
+          _dec: c.fun({ i: c.number }),
+        })
+        .wrap(ChildExampleImpl)
+    ).to.be.ok
   })
 
   it('allows `instanceof` and `isA` checks on the wrapped constructor', function() {
     const instance = new Example(5)
-    instance.should.be['instanceof'](Example)
-    c.isA(Example).check(instance).should.be.ok
+    expect(instance).to.be.an.instanceof(Example)
+    expect(c.isA(Example)).to.passValue(instance)
   })
 
   it('allows `instanceof` and `isA` checks on the implementation', function() {
     const instance = new Example(5)
-    instance.should.be['instanceof'](ExampleImpl)
-    c.isA(ExampleImpl).check(instance).should.be.ok
+    expect(instance).to.be.an.instanceof(ExampleImpl)
+    expect(c.isA(ExampleImpl)).to.passValue(instance)
   })
 
   it('supports returning explicitly', function() {
@@ -747,13 +742,13 @@ describe('constructs', function() {
       .returns(c.object({ x: c.number }))
       .constructs({})
       .wrap(Constructor)
-    new Wrapped().should.eql({ x: 5 })
+    expect(new Wrapped()).to.include({ x: 5 })
     theReturnValue = undefined
-    new Wrapped().should.eql({ x: 1 })
+    expect(new Wrapped()).to.include({ x: 1 })
     theReturnValue = 'foo'
-    new Wrapped().should.eql({ x: 1 })
+    expect(new Wrapped()).to.include({ x: 1 })
     theReturnValue = 5
-    new Wrapped().should.eql({ x: 1 })
+    expect(new Wrapped()).to.include({ x: 1 })
   })
 
   describe('in the presence of the prototype chain', function() {
@@ -777,16 +772,16 @@ describe('constructs', function() {
 
     it('produces a usable object with shared methods', function() {
       const instance = new SubExample(10)
-      instance.should.have.property('pair')
+      expect(instance).to.have.property('pair')
       instance.should.not.have.ownProperty('pair')
-      instance.should.have.property('inc')
+      expect(instance).to.have.property('inc')
       instance.should.not.have.ownProperty('inc')
-      instance.pair().should.eql([10, 10])
+      expect(instance.pair()).to.deep.equal([10, 10])
     })
     it('allows use of methods from up the chain', function() {
       const instance = new SubExample(10)
       instance.inc(2)
-      instance.x.should.eql(12)
+      expect(instance).to.include({ x: 12 })
     })
     it('it detects misuses of methods from up the chain', function() {
       const instance = new SubExample(10)
@@ -800,7 +795,7 @@ describe('constructs', function() {
     it('methods up the chain omitted from the contract can be used normally', function() {
       const instance = new SubExample(10)
       instance._dec(3)
-      instance.x.should.eql(7)
+      expect(instance).to.include({ x: 7 })
     })
     it('check `isA` for the `this` argument', function() {
       const instance = new SubExample(10)
@@ -854,7 +849,7 @@ describe('constructs', function() {
     const theObject = { BuildIt: TheConstructor }
 
     it('produces a usable object', function() {
-      wrapped(theObject, 10).should.be.eql(11)
+      expect(wrapped(theObject, 10)).to.equal(11)
     })
 
     it('detects misuses', function() {
@@ -922,27 +917,19 @@ describe('fn', function() {
   const oneOptC = c.fn(c.number, c.optional(c.number))
 
   it('is a function', function() {
-    idC.wrap(id).should.be['instanceof'](Function)
+    expect(idC.wrap(id)).to.be.an.instanceof(Function)
   })
   it('passes id(number)', function() {
-    idC
-      .wrap(id)(5)
-      .should.eql(5)
+    expect(idC.wrap(id)(5)).to.equal(5)
   })
   it('passes strId(number)', function() {
-    strIdC
-      .wrap(strId)(10)
-      .should.eql('10')
+    expect(strIdC.wrap(strId)(10)).to.equal('10')
   })
   it('passes twoId(number, string)', function() {
-    twoIdC
-      .wrap(twoId)(5, 'x')
-      .should.eql([5, 'x'])
+    expect(twoIdC.wrap(twoId)(5, 'x')).to.deep.equal([5, 'x'])
   })
   it('passes manyId(num, num, str)', function() {
-    manyIdC
-      .wrap(manyId)(5, 7, 10)
-      .should.eql(5)
+    expect(manyIdC.wrap(manyId)(5, 7, 10)).to.equal(5)
   })
 
   it('fails on non-function', function() {
@@ -983,7 +970,7 @@ describe('fn', function() {
 
   it('success on this', function() {
     const v = { x: 'w', getX: thisC.wrap(thisId) }
-    v.getX(4).should.eql('w')
+    expect(v.getX(4)).to.equal('w')
   })
   it('fails on this', function() {
     ;(function() {
@@ -993,20 +980,16 @@ describe('fn', function() {
   })
 
   it('passes w missing opt', function() {
-    oneOptC
-      .wrap(twoId)(10)
-      .should.eql([10, undefined])
+    expect(oneOptC.wrap(twoId)(10)).to.deep.equal([10, undefined])
   })
   it('passes none missing', function() {
-    oneOptC
-      .wrap(twoId)(10, 20)
-      .should.eql([10, 20])
+    expect(oneOptC.wrap(twoId)(10, 20)).to.deep.equal([10, 20])
   })
   it('passes with extra', function() {
-    oneOptC
-      .extraArgs(c.any)
-      .wrap(twoId)(10, 20, 30)
-      .should.eql([10, 20])
+    expect(oneOptC.extraArgs(c.any).wrap(twoId)(10, 20, 30)).to.deep.equal([
+      10,
+      20,
+    ])
   })
   it('fails too few', function() {
     ;(function() {
@@ -1052,27 +1035,19 @@ describe('fun', function() {
     .returns(c.string)
 
   it('is a function', function() {
-    idC.wrap(id).should.be['instanceof'](Function)
+    expect(idC.wrap(id)).to.be.an.instanceof(Function)
   })
   it('passes id(number)', function() {
-    idC
-      .wrap(id)(5)
-      .should.eql(5)
+    expect(idC.wrap(id)(5)).to.equal(5)
   })
   it('passes strId(number)', function() {
-    strIdC
-      .wrap(strId)(10)
-      .should.eql('10')
+    expect(strIdC.wrap(strId)(10)).to.equal('10')
   })
   it('passes twoId(number, string)', function() {
-    twoIdC
-      .wrap(twoId)(5, 'x')
-      .should.eql([5, 'x'])
+    expect(twoIdC.wrap(twoId)(5, 'x')).to.deep.equal([5, 'x'])
   })
   it('passes manyId(num, num, str)', function() {
-    manyIdC
-      .wrap(manyId)(5, 7, 10)
-      .should.eql(5)
+    expect(manyIdC.wrap(manyId)(5, 7, 10)).to.equal(5)
   })
 
   it('fails on non-function', function() {
@@ -1113,7 +1088,7 @@ describe('fun', function() {
 
   it('success on this', function() {
     const v = { x: 'w', getX: thisC.wrap(thisId, 'thisId') }
-    v.getX(4).should.eql('w')
+    expect(v.getX(4)).to.equal('w')
   })
   it('fails on this', function() {
     ;(function() {
