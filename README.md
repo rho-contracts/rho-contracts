@@ -111,8 +111,8 @@ var derive =
     .fun({ fn: c.fun({ x: c.number }).returns(c.number) }, { deltaX: c.number })
     .wrap(
       /* And the implementation goes here: */
-      function(fn, deltaX) {
-        return function(x) {
+      function (fn, deltaX) {
+        return function (x) {
           return (fn(x + deltaX / 2) - fn(x - deltaX / 2)) / deltaX
         }
       }
@@ -473,7 +473,7 @@ Usually, the implementation, the contract, and the wrapped function are all
 created at once in one expression, like this:
 
 ```javascript
-var square = c.fun({ x: c.number }).wrap(function(x) {
+var square = c.fun({ x: c.number }).wrap(function (x) {
   return x * x
 })
 ```
@@ -864,7 +864,7 @@ function CounterImpl(x) {
   // return this; // return statement omitted
 }
 
-CounterImpl.prototype.inc = function(i) {
+CounterImpl.prototype.inc = function (i) {
   this.x += i
 }
 
@@ -918,7 +918,7 @@ function CounterImpl(x) {
   return this // see below
 }
 
-CounterImpl.prototype.inc = function(i) {
+CounterImpl.prototype.inc = function (i) {
   this.x += i
 }
 
