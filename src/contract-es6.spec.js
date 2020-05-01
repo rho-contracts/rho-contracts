@@ -7,8 +7,8 @@
 const { expect } = require('chai')
 const c = require('./contract')
 
-describe('c.constructs', function() {
-  describe('with a class', function() {
+describe('c.constructs', function () {
+  describe('with a class', function () {
     class ExampleImpl {
       constructor(initialValue) {
         this.value = initialValue
@@ -25,18 +25,18 @@ describe('c.constructs', function() {
 
     const Example = theContract.wrap(ExampleImpl)
 
-    it('can construct', function() {
+    it('can construct', function () {
       const instance = new Example(10)
       expect(instance).to.include({ value: 10 })
     })
 
-    it('allows `instanceof` and `isA` checks on the wrapped constructor', function() {
+    it('allows `instanceof` and `isA` checks on the wrapped constructor', function () {
       const instance = new Example(5)
       expect(instance).to.be.an.instanceof(Example)
       expect(c.isA(Example)).to.passValue(instance)
     })
 
-    it('allows `instanceof` and `isA` checks on the implementation', function() {
+    it('allows `instanceof` and `isA` checks on the implementation', function () {
       const instance = new Example(5)
       expect(instance).to.be.an.instanceof(ExampleImpl)
       expect(c.isA(ExampleImpl)).to.passValue(instance)

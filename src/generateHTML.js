@@ -90,7 +90,7 @@ function renderType(type, name) {
 function renderCategories(mod) {
   function filterForCat(list, cat) {
     const result = {}
-    __.each(list, function(v, n) {
+    __.each(list, function (v, n) {
       if (v.category === cat) result[n] = v
     })
     return result
@@ -104,7 +104,7 @@ function renderCategories(mod) {
     r.hasValues = !__.isEmpty(r.values)
   }
 
-  const result = __.map(mod.categories, function(cat) {
+  const result = __.map(mod.categories, function (cat) {
     const result = {
       hasHeader: true,
       name: c.name,
@@ -141,7 +141,7 @@ function renderModule(name) {
 }
 
 function generateHTML() {
-  fs.readFile('resources/module.mustache', 'ascii', function(err, template) {
+  fs.readFile('resources/module.mustache', 'ascii', function (err, template) {
     if (err) {
       console.error('Could not open file: %s', err)
       process.exit(1)

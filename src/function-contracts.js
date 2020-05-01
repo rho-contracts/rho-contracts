@@ -12,7 +12,7 @@ const errors = require('./contract-errors')
 
 function checkOptionalArgumentFormals(who, argumentContracts) {
   let optionsOnly = false
-  _.each(argumentContracts, function(c, i) {
+  _.each(argumentContracts, function (c, i) {
     if (optionsOnly && !c.isOptional) {
       throw new errors.ContractLibraryError(
         'fun',
@@ -32,7 +32,7 @@ function checkOptionalArgumentCount(
   context
 ) {
   const nOptional = _.size(
-    _.filter(argumentContracts, function(c) {
+    _.filter(argumentContracts, function (c) {
       return c.isOptional
     })
   )
@@ -58,8 +58,9 @@ function checkOptionalArgumentCount(
     context.fail(
       new errors.ContractError(
         context,
-        `Too many arguments, expected at most ${nRequired +
-          nOptional} but got ${actuals.length}`
+        `Too many arguments, expected at most ${
+          nRequired + nOptional
+        } but got ${actuals.length}`
       ).fullContract()
     )
   }
@@ -75,18 +76,18 @@ function fnHelper(who, argumentContracts) {
   self.thisContract = c.any
   self.resultContract = c.any
   self.firstChecker = _.isFunction
-  self.wrapper = function(fn, next, context) {
+  self.wrapper = function (fn, next, context) {
     const self = this
 
     if (!context.thingName) {
       context.thingName = u.functionName(fn)
     }
 
-    const r = function(/* ... */) {
+    const r = function (/* ... */) {
       const contextHere = u.clone(context)
       contextHere.stack = u.clone(context.stack)
       contextHere.thingName = self.thingName || contextHere.thingName
-      const reverseBlame = function(r) {
+      const reverseBlame = function (r) {
         if (r) contextHere.blameMe = !contextHere.blameMe
       }
 
@@ -98,7 +99,7 @@ function fnHelper(who, argumentContracts) {
         contextHere
       )
       reverseBlame(true)
-      const next = function(nextContract, nextV, nextContext, rb) {
+      const next = function (nextContract, nextV, nextContext, rb) {
         contextHere.stack.push(nextContext)
         reverseBlame(rb)
         const result = c.privates.checkWrapWContext(
@@ -122,7 +123,7 @@ function fnHelper(who, argumentContracts) {
           self.argumentContracts,
           _.toArray(arguments).slice(0, self.argumentContracts.length)
         ),
-        function(pair, i) {
+        function (pair, i) {
           return next(
             pair[0],
             pair[1],
@@ -157,29 +158,29 @@ function fnHelper(who, argumentContracts) {
 
     return r
   }
-  self.extraArgs = function(contract) {
+  self.extraArgs = function (contract) {
     contract = contract || c.any
     const self = this
     return u.gentleUpdate(self, { extraArgumentContract: contract })
   }
   self.needsWrapping = true
-  self.thisArg = function(contract) {
+  self.thisArg = function (contract) {
     const self = this
     return u.gentleUpdate(self, { thisContract: contract })
   }
   self.ths = self.thisArg // for backward compatibility
-  self.returns = function(contract) {
+  self.returns = function (contract) {
     const self = this
     return u.gentleUpdate(self, { resultContract: contract })
   }
 
-  self.constructs = function(prototypeFields) {
+  self.constructs = function (prototypeFields) {
     const self = this
 
     const oldWrapper = self.wrapper
 
     return u.gentleUpdate(self, {
-      nestedChecker: function(data, next, context) {
+      nestedChecker: function (data, next, context) {
         const self = this
 
         const missing = []
@@ -200,7 +201,7 @@ function fnHelper(who, argumentContracts) {
         }
       },
 
-      wrapper: function(Constructor, next, context) {
+      wrapper: function (Constructor, next, context) {
         const self = this
 
         //
@@ -220,8 +221,8 @@ function fnHelper(who, argumentContracts) {
         // without `setPrototypeOf` is possible using ES6's `class`
         // and `super` keywords.
         //
-        const forceNewInvoke = function(fn) {
-          return function(/* ... */) {
+        const forceNewInvoke = function (fn) {
+          return function (/* ... */) {
             const ReadyToNew = Function.prototype.bind.apply(
               fn,
               [null].concat(_.toArray(arguments))
@@ -275,7 +276,7 @@ function fnHelper(who, argumentContracts) {
           u.gentleUpdate(context, { thingName: constructorName })
         )
 
-        const WrappedConstructorWithResultCheck = function(/* ... */) {
+        const WrappedConstructorWithResultCheck = function (/* ... */) {
           const contextHere = u.clone(context)
           contextHere.stack = u.clone(context.stack)
           contextHere.thingName =
@@ -328,7 +329,7 @@ function fnHelper(who, argumentContracts) {
           // When a function has no specified `thisContract`, we assume
           // it is a methods and set the  `thisContract` to `c.is(Constructor)`
           const newThisContract = c.isA(Constructor)
-          _.each(prototypeFields, function(contract, k) {
+          _.each(prototypeFields, function (contract, k) {
             wrapMethod(dest, src, k, contract, newThisContract)
           })
         }
@@ -355,7 +356,7 @@ function fnHelper(who, argumentContracts) {
     })
   }
 
-  self.toString = function() {
+  self.toString = function () {
     const self = this
     return `c.${self.contractName}(${
       self.thisContract !== c.any ? `this: ${self.thisContract}, ` : ''
@@ -372,7 +373,7 @@ function fn(/* ... */) {
 exports.fn = fn
 
 function funHelper(who, argumentContracts) {
-  _.each(argumentContracts, function(argSpec, i) {
+  _.each(argumentContracts, function (argSpec, i) {
     if (!_.isObject(argSpec))
       throw new errors.ContractLibraryError(
         who,
@@ -401,17 +402,17 @@ function funHelper(who, argumentContracts) {
         )} arguments, but got ${u.stringify(s)}`
       )
   })
-  const contracts = _.map(argumentContracts, function(singleton) {
+  const contracts = _.map(argumentContracts, function (singleton) {
     const name = _.keys(singleton)[0]
     const contract = c.privates._autoToContract(singleton[name])
 
     return u.gentleUpdate(contract, { thingName: name })
   })
 
-  const toString = function() {
+  const toString = function () {
     const self = this
 
-    const argumentStrings = _.map(contracts, function(c) {
+    const argumentStrings = _.map(contracts, function (c) {
       return `{ ${c.thingName}: ${c.toString()} }`
     })
 

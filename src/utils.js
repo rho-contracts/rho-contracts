@@ -30,7 +30,7 @@ function clone(obj) {
 function gentleUpdate(obj, spec) {
   // aka, not an imperative update. aka, no bang.
   const other = clone(obj)
-  _.each(spec, function(v, k) {
+  _.each(spec, function (v, k) {
     other[k] = v
   })
   return other

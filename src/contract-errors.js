@@ -9,7 +9,7 @@ const u = require('./utils')
 //
 
 const stackContextItems = {
-  argument: function(arg) {
+  argument: function (arg) {
     return {
       short: _.isNumber(arg) ? `.arg(${arg})` : `.${arg}`,
       long: `for the ${
@@ -27,18 +27,18 @@ const stackContextItems = {
     long: 'for the extra argument array of the call',
   },
 
-  and: function(i) {
+  and: function (i) {
     return {
       short: `.and(${i})`,
       long: `for the ${u.ith(i)} branch of the \`and\` contract`,
     }
   },
 
-  or: function(i) {
+  or: function (i) {
     return { short: '.or' }
   },
 
-  arrayItem: function(i) {
+  arrayItem: function (i) {
     return {
       short: `[${i}]`,
       long: `for the ${u.ith(i)} element of the array`,
@@ -46,18 +46,18 @@ const stackContextItems = {
     }
   },
 
-  tupleItem: function(i) {
+  tupleItem: function (i) {
     return {
       short: `[${i}]`,
       long: `for the ${u.ith(i)} element of the tuple`,
     }
   },
 
-  hashItem: function(k) {
+  hashItem: function (k) {
     return { short: `.${k}`, long: `for the key \`${k}\` of the hash` }
   },
 
-  objectField: function(f) {
+  objectField: function (f) {
     return { short: `.${f}`, long: `for the field \`${f}\` of the object` }
   },
 
@@ -141,17 +141,17 @@ function ContractError(/* opt */ context, /* opt */ msg) {
 }
 
 ContractError.prototype = Object.assign(Object.create(Error.prototype), {
-  captureCleanStack: function() {
+  captureCleanStack: function () {
     const self = this
     self.renderedStack = prettyPrintStack(captureCleanStack())
     Object.defineProperty(self, 'stack', {
-      get: function() {
+      get: function () {
         return `${this.name}: ${this.message}\n${self.renderedStack}`
       },
     })
   },
 
-  blame: function(context) {
+  blame: function (context) {
     const self = this
 
     self.context = context || self.context
@@ -169,7 +169,7 @@ ContractError.prototype = Object.assign(Object.create(Error.prototype), {
     }
   },
 
-  expected: function(expected, data, /* opt */ context) {
+  expected: function (expected, data, /* opt */ context) {
     const self = this
 
     self.context = context || self.context
@@ -179,7 +179,7 @@ ContractError.prototype = Object.assign(Object.create(Error.prototype), {
     return self
   },
 
-  fullValue: function(/* opt */ context) {
+  fullValue: function (/* opt */ context) {
     const self = this
 
     self.context = context || self.context
@@ -197,7 +197,7 @@ ContractError.prototype = Object.assign(Object.create(Error.prototype), {
     return self
   },
 
-  fullContract: function(/* opt */ context) {
+  fullContract: function (/* opt */ context) {
     const self = this
 
     self.context = context || self.context
@@ -230,7 +230,7 @@ ContractError.prototype = Object.assign(Object.create(Error.prototype), {
     return self
   },
 
-  fullContractAndValue: function(/* opt */ context) {
+  fullContractAndValue: function (/* opt */ context) {
     const self = this
 
     self.fullContract(context)
