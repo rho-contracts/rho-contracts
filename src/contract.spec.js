@@ -661,8 +661,10 @@ describe('constructs', function () {
     it('produces a usable object with shared methods', function () {
       const instance = new SubExample(10)
       expect(instance).to.have.property('pair')
+      // eslint-disable-next-line no-prototype-builtins
       expect(instance.hasOwnProperty('pair')).to.be.false
       expect(instance).to.have.property('inc')
+      // eslint-disable-next-line no-prototype-builtins
       expect(instance.hasOwnProperty('inc')).to.be.false
       expect(instance.pair()).to.deep.equal([10, 10])
     })

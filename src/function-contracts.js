@@ -115,7 +115,7 @@ function fnHelper(who, argumentContracts) {
       const wrappedThis = next(
         self.thisContract,
         this,
-        errors.stackContextItems['this'],
+        errors.stackContextItems.this,
         true
       )
       const wrappedArgs = _.map(
