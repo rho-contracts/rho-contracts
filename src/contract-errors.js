@@ -215,13 +215,13 @@ ContractError.prototype = Object.assign(Object.create(Error.prototype), {
           immediateContext.i
         )} extra argument of the call.\n`
         stack = stack.slice(0, -2)
-      } else if (immediateContext['long']) {
-        self.message += `${immediateContext['long']}\n`
+      } else if (immediateContext.long) {
+        self.message += `${immediateContext.long}\n`
         stack = stack.slice(0, -1)
       }
 
       if (stack.length > 0) {
-        const stackStrings = stack.map(i => (i['short'] ? i['short'] : i))
+        const stackStrings = stack.map(i => (i.short ? i.short : i))
         self.message +=
           `at position ${stackStrings.join('')}\n` +
           `in contract:\n${self.context.contract.toString()}\n`
