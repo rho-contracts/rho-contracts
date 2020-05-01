@@ -1,6 +1,6 @@
 {
   "name": "@rho-contracts/rho-contracts",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Racket-style Higher Order Contracts in Plain Javascript",
   "main": "index.js",
   "keywords": [
