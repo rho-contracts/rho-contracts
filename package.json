@@ -8,7 +8,7 @@
   ],
   "dependencies": {
     "callsite": "^1.0.0",
-    "underscore": "1.10.x"
+    "underscore": "1.13.x"
   },
   "devDependencies": {
     "chai": "^4.2.0",
